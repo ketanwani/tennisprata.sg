@@ -63,9 +63,9 @@ For a real deployment, replace the console reminder stubs with providers:
 
 The app is already Postgres-backed in Docker. Set production `SECRET_KEY`, `DEBUG=0`, `ALLOWED_HOSTS`, provider credentials, and run behind HTTPS.
 
-## DigitalOcean Deployment With Nginx
+## DigitalOcean Deployment With Caddy
 
-The production stack uses Docker for Django/Postgres/Redis/Celery and host-level Nginx with Certbot for HTTPS.
+The production stack uses Docker for Django/Postgres/Redis/Celery and Caddy for automatic HTTPS.
 
 On the Droplet, clone the repository to:
 
@@ -104,26 +104,12 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T web pyth
 docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T web python manage.py collectstatic --noinput
 ```
 
-Install Nginx and Certbot on the Droplet:
+Caddy runs inside Docker and automatically issues/renews certificates for `tennisprata.live` and `www.tennisprata.live`. Make sure no host-level Nginx/Apache process is using ports 80 or 443:
 
 ```bash
-sudo apt update
-sudo apt install -y nginx certbot python3-certbot-nginx
-```
-
-Copy the Nginx config:
-
-```bash
-sudo cp /root/tennisprata.sg/deploy/nginx/tennisprata.live.conf /etc/nginx/sites-available/tennisprata.live
-sudo ln -s /etc/nginx/sites-available/tennisprata.live /etc/nginx/sites-enabled/tennisprata.live
-sudo nginx -t
-sudo systemctl reload nginx
-```
-
-Issue the HTTPS certificate:
-
-```bash
-sudo certbot --nginx -d tennisprata.live -d www.tennisprata.live
+sudo systemctl stop nginx || true
+sudo systemctl disable nginx || true
+sudo ss -tulpn | grep -E ':80|:443' || true
 ```
 
 Allow web traffic if UFW is enabled:
@@ -131,6 +117,12 @@ Allow web traffic if UFW is enabled:
 ```bash
 sudo ufw allow 80
 sudo ufw allow 443
+```
+
+Check Caddy logs:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml logs -f caddy
 ```
 
 After DNS points `tennisprata.live` and `www.tennisprata.live` to the Droplet IP, the site should be available at:

@@ -1,0 +1,5 @@
+tennisprata.live, www.tennisprata.live {
+    encode gzip zstd
+
+    reverse_proxy web:8000
+}

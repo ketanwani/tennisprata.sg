@@ -3,6 +3,7 @@ services:
     command: gunicorn tennisprata.wsgi:application --bind 0.0.0.0:8000 --workers 2 --timeout 60
     env_file:
       - .env
+    ports: []
 
   celery:
     env_file:
@@ -11,3 +12,21 @@ services:
   celery-beat:
     env_file:
       - .env
+
+  caddy:
+    image: caddy:2.8-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./deploy/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+
+volumes:
+  caddy_data:
+  caddy_config:
