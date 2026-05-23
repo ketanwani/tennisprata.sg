@@ -27,6 +27,8 @@ jobs:
             set -e
             cd /root/tennisprata.sg
             git pull --ff-only origin main
+            systemctl stop nginx || true
+            systemctl disable nginx || true
             docker compose -f docker-compose.yml -f docker-compose.prod.yml build
             docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
             docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T web python manage.py migrate

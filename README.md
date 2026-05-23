@@ -107,8 +107,8 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T web pyth
 Caddy runs inside Docker and automatically issues/renews certificates for `tennisprata.live` and `www.tennisprata.live`. Make sure no host-level Nginx/Apache process is using ports 80 or 443:
 
 ```bash
-sudo systemctl stop nginx || true
-sudo systemctl disable nginx || true
+systemctl stop nginx || true
+systemctl disable nginx || true
 sudo ss -tulpn | grep -E ':80|:443' || true
 ```
 
