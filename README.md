@@ -13,6 +13,7 @@ A Dockerized Django POC for social doubles tennis sessions with optional prata s
 ## Run locally
 
 ```powershell
+Copy-Item .env.example .env
 docker compose build
 docker compose up -d
 docker compose exec web python manage.py migrate

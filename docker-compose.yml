@@ -8,7 +8,7 @@ services:
     ports:
       - "127.0.0.1:8000:8000"
     env_file:
-      - .env.example
+      - .env
     depends_on:
       db:
         condition: service_healthy
@@ -43,7 +43,7 @@ services:
       - .:/app
       - media_data:/app/media
     env_file:
-      - .env.example
+      - .env
     depends_on:
       db:
         condition: service_healthy
@@ -57,7 +57,7 @@ services:
       - .:/app
       - media_data:/app/media
     env_file:
-      - .env.example
+      - .env
     depends_on:
       db:
         condition: service_healthy
