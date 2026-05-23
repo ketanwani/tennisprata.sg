@@ -1,0 +1,25 @@
+{% if session.court_name %}
+  <div class="map-preview {{ compact|default:'' }}">
+    {% if session.latitude and session.longitude %}
+      <iframe
+        title="Map preview for {{ session.court_name }}"
+        src="https://maps.google.com/maps?q={{ session.latitude }},{{ session.longitude }}&z=15&output=embed"
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade"
+        tabindex="-1"></iframe>
+      <a class="map-preview-link" href="https://www.google.com/maps/search/?api=1&query={{ session.latitude }},{{ session.longitude }}" target="_blank" rel="noreferrer" aria-label="Open {{ session.court_name }} in Google Maps">
+        <span>Open in Google Maps</span>
+      </a>
+    {% else %}
+      <iframe
+        title="Map preview for {{ session.court_name }}"
+        src="https://maps.google.com/maps?q={{ session.court_name|urlencode }}%20Singapore&z=15&output=embed"
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade"
+        tabindex="-1"></iframe>
+      <a class="map-preview-link" href="https://www.google.com/maps/search/?api=1&query={{ session.court_name|urlencode }}%20Singapore" target="_blank" rel="noreferrer" aria-label="Open {{ session.court_name }} in Google Maps">
+        <span>Open in Google Maps</span>
+      </a>
+    {% endif %}
+  </div>
+{% endif %}

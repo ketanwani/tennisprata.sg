@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Create challenge{% endblock %}
+{% block content %}
+  <section class="narrow panel">
+    <div class="session-title-row">
+      <div class="title-with-back">
+        <a class="icon-button" href="{% url 'dashboard' %}" aria-label="Back to home" title="Back to home">
+          <svg aria-hidden="true" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 12H5"></path>
+            <path d="m12 19-7-7 7-7"></path>
+          </svg>
+        </a>
+        <div>
+        <p class="eyebrow">{{ group.name }}</p>
+        <h1>{% if is_edit %}Edit prata challenge{% else %}Create prata challenge{% endif %}</h1>
+        </div>
+      </div>
+    </div>
+    <form method="post" class="form-grid session-form">
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+        <div class="form-errors">{{ form.non_field_errors }}</div>
+      {% endif %}
+      <div class="form-section">
+        <h2>Basics</h2>
+        {% include "play/form_field.html" with field=form.title %}
+        {% include "play/form_field.html" with field=form.match_type %}
+        {% include "play/form_field.html" with field=form.host_pair %}
+        <p class="form-section-copy">Host pair is required for doubles only. <a href="{% url 'create_pair' %}">Need to set up a pair?</a></p>
+      </div>
+      <div class="form-section">
+        <h2>When</h2>
+        <div class="inline-fields">
+          {% include "play/form_field.html" with field=form.date %}
+          {% include "play/form_field.html" with field=form.time %}
+        </div>
+      </div>
+      <div class="form-section">
+        <h2>Where</h2>
+        {% include "play/form_field.html" with field=form.court_name %}
+      </div>
+      <div class="hidden-location-fields" aria-hidden="true">
+        {{ form.locality }}
+        {{ form.court_address }}
+        {{ form.postal_code }}
+        {{ form.latitude }}
+        {{ form.longitude }}
+      </div>
+      <div class="form-section">
+        <h2>Match level</h2>
+        <p class="form-section-copy">Pick the preferred NTRP range so challengers know what kind of hit they are joining.</p>
+        <p class="form-section-copy"><a href="https://www.usta.com/en/home/coach-organize/tennis-tool-center/run-usta-programs/national/understanding-ntrp-ratings.html" target="_blank" rel="noreferrer">Learn how NTRP levels work</a></p>
+        <div class="inline-fields">
+          {% include "play/form_field.html" with field=form.level_min %}
+          {% include "play/form_field.html" with field=form.level_max %}
+        </div>
+      </div>
+      <div class="form-section">
+        <h2>Social terms</h2>
+        {% include "play/form_field.html" with field=form.prata_terms %}
+        {% include "play/form_field.html" with field=form.notes %}
+      </div>
+      <button type="submit">{% if is_edit %}Save changes{% else %}Create invite link{% endif %}</button>
+      {% if is_edit %}
+        <a class="button secondary" href="{{ session.get_absolute_url }}">Cancel</a>
+      {% endif %}
+    </form>
+  </section>
+  <script>
+    window.TENNISPRATA_LOCATION_SEARCH_URL = "{% url 'location_search' %}";
+    const matchTypeSelect = document.querySelector("#id_match_type");
+    const hostPairField = document.querySelector("#id_host_pair")?.closest("label");
+    function updateMatchTypeFields() {
+      if (!matchTypeSelect || !hostPairField) return;
+      hostPairField.hidden = matchTypeSelect.value === "singles";
+    }
+    matchTypeSelect?.addEventListener("change", updateMatchTypeFields);
+    updateMatchTypeFields();
+  </script>
+  <script src="/static/play/location-search.js?v=search-radius-1"></script>
+{% endblock %}

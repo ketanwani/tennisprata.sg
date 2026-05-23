@@ -1,0 +1,42 @@
+<article class="panel session-bucket">
+  <div class="section-title">
+    <h2>{{ title }}</h2>
+    <span class="status-pill">{{ items|length }}</span>
+  </div>
+  <div class="session-list">
+    {% for item in items %}
+      <article class="session-card workflow-card">
+        <div class="session-main">
+          <div class="session-card-head">
+            <span class="status-pill">{{ item.session.get_status_display }}</span>
+            <span class="status-pill">{{ item.session.get_match_type_display }}</span>
+            <span class="session-date">{{ item.session.starts_at|date:"D, j M, g:i A" }}</span>
+          </div>
+          <h3><a href="{{ item.session.get_absolute_url }}">{{ item.session.title }}</a></h3>
+          <p class="session-location">{{ item.session.court_name }}</p>
+          <div class="match-line">
+            <strong>{{ item.session.host_side_name }}</strong>
+            <span>vs</span>
+            <strong>{{ item.session.challenger_side_name }}</strong>
+          </div>
+        </div>
+        <span class="session-actions">
+          <a class="button small-button" href="{{ item.session.get_absolute_url }}">
+            {% if item.can_record_score %}
+              Wrap up match
+            {% elif item.can_give_shoutouts %}
+              Finish shoutouts
+            {% else %}
+              View
+            {% endif %}
+          </a>
+          {% if item.shoutouts_remaining %}
+            <small>{{ item.shoutouts_remaining }} left</small>
+          {% endif %}
+        </span>
+      </article>
+    {% empty %}
+      <p class="empty">{{ empty_text }}</p>
+    {% endfor %}
+  </div>
+</article>

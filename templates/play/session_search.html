@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Search sessions{% endblock %}
+{% block content %}
+  <section class="panel search-panel">
+    <div class="session-title-row">
+      <div class="title-with-back">
+        <a class="icon-button" href="{% url 'dashboard' %}" aria-label="Back to home" title="Back to home">
+          <svg aria-hidden="true" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 12H5"></path>
+            <path d="m12 19-7-7 7-7"></path>
+          </svg>
+        </a>
+        <div>
+          <p class="eyebrow">Find a prata hit</p>
+          <h1>Search sessions</h1>
+        </div>
+      </div>
+    </div>
+
+    <form method="get" class="form-grid search-form">
+      <div class="inline-fields">
+        {% include "play/form_field.html" with field=form.location %}
+        {% include "play/form_field.html" with field=form.radius_km %}
+      </div>
+      <p class="form-section-copy">For radius search, choose a OneMap suggestion after typing the court, area, or postal code. Plain text search still works without selecting a suggestion.</p>
+      {{ form.latitude }}
+      {{ form.longitude }}
+      <div class="inline-fields">
+        {% include "play/form_field.html" with field=form.host %}
+        {% include "play/form_field.html" with field=form.match_type %}
+      </div>
+      <div class="inline-fields">
+        {% include "play/form_field.html" with field=form.status %}
+        {% include "play/form_field.html" with field=form.date_from %}
+      </div>
+      <div class="inline-fields">
+        {% include "play/form_field.html" with field=form.date_to %}
+        {% include "play/form_field.html" with field=form.time_from %}
+      </div>
+      <div class="inline-fields">
+        {% include "play/form_field.html" with field=form.time_to %}
+        <label class="empty-label"><span>&nbsp;</span><button type="submit">Apply filters</button></label>
+      </div>
+    </form>
+  </section>
+
+  <section class="panel search-results">
+    <div class="section-title">
+      <h2>Results</h2>
+      {% if location_radius_used %}<span class="status-pill">Radius filtered</span>{% endif %}
+    </div>
+    <div class="session-list">
+      {% for session in sessions %}
+        <article class="session-card">
+          <div class="session-main">
+            <div class="session-card-head">
+              <span class="status-pill">{{ session.get_status_display }}</span>
+              <span class="status-pill">{{ session.get_match_type_display }}</span>
+              <span class="session-date">{{ session.starts_at|date:"D, j M, g:i A" }}</span>
+            </div>
+            <h3><a href="{{ session.get_absolute_url }}">{{ session.title }}</a></h3>
+            <p class="session-location">{{ session.court_name }}</p>
+            <div class="match-line">
+              <strong>{{ session.host_side_name }}</strong>
+              <span>vs</span>
+              <strong>{{ session.challenger_side_name }}</strong>
+            </div>
+            {% include "play/weather_status.html" with session=session compact=True %}
+          </div>
+          <span class="session-actions">
+            <a class="icon-button" href="{{ session.get_absolute_url }}" aria-label="View session details" title="View session details">
+              <svg aria-hidden="true" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </a>
+            {% if session.status == "open" %}
+              <a class="button small-button" href="{{ session.invite_url }}">Join</a>
+            {% endif %}
+          </span>
+        </article>
+      {% empty %}
+        <p class="empty">No sessions match these filters yet.</p>
+      {% endfor %}
+    </div>
+  </section>
+  <script>
+    window.TENNISPRATA_LOCATION_SEARCH_URL = "{% url 'location_search' %}";
+  </script>
+  <script src="/static/play/location-search.js?v=search-radius-1"></script>
+{% endblock %}

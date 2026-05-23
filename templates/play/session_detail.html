@@ -1,0 +1,377 @@
+{% extends "base.html" %}
+{% block title %}{{ session.title }}{% endblock %}
+{% block content %}
+  <section class="session-detail">
+    <article class="panel">
+      <p class="eyebrow">
+        {{ session.get_status_display }} -
+        {% if session.weather_risk == "Unknown" or session.weather_risk == "Pending" %}
+          Rain forecast unavailable
+        {% else %}
+          {{ session.weather_risk }} rain risk
+        {% endif %}
+      </p>
+      <div class="session-title-row">
+        <div class="title-with-back">
+          <a class="icon-button" href="{% url 'dashboard' %}" aria-label="Back to home" title="Back to home">
+            <svg aria-hidden="true" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 12H5"></path>
+              <path d="m12 19-7-7 7-7"></path>
+            </svg>
+          </a>
+          <h1>{{ session.title }}</h1>
+        </div>
+        <div class="page-actions">
+          {% if can_join_session %}
+            <a class="button session-primary-action" href="{{ session.invite_url }}">Join challenge</a>
+          {% endif %}
+          <button class="icon-button" type="button" data-copy-url="{{ request.scheme }}://{{ request.get_host }}{{ session.invite_url }}" aria-label="Copy invite link" title="Copy invite link">
+            <svg class="copy-icon" aria-hidden="true" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            <svg class="copied-icon" aria-hidden="true" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 6 9 17l-5-5"></path>
+            </svg>
+          </button>
+          {% if can_edit_session %}
+            <a class="icon-button" href="{% url 'edit_session' session.id %}" aria-label="Edit session" title="Edit session">
+              <svg aria-hidden="true" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
+              </svg>
+            </a>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="versus">
+        <div>
+          <span>{% if session.is_singles %}Host player{% else %}Host pair{% endif %}</span>
+          <strong>{{ session.host_side_name }}</strong>
+        </div>
+        <b>vs</b>
+        <div>
+          <span>{% if session.is_singles %}Challenger player{% else %}Challenger pair{% endif %}</span>
+          <strong>{{ session.challenger_side_name }}</strong>
+        </div>
+      </div>
+
+      <dl class="details">
+        <div><dt>Match type</dt><dd>{{ session.get_match_type_display }}</dd></div>
+        <div><dt>When</dt><dd>{{ session.starts_at|date:"D, j M, g:i A" }}</dd></div>
+        <div>
+          <dt>Where</dt>
+          <dd>
+            {{ session.court_name }} {{ session.court_details }}
+            {% if session.court_address %}<br>{{ session.court_address }}{% endif %}
+            {% if session.postal_code %}<br>Singapore {{ session.postal_code }}{% endif %}
+          </dd>
+        </div>
+        <div><dt>NTRP range</dt><dd>{{ session.level_min }} to {{ session.level_max }}</dd></div>
+        <div><dt>Prata vibes</dt><dd>{{ session.prata_terms|default:"No prata stakes. Just tennis and pride." }}</dd></div>
+        <div><dt>Weather</dt><dd>{% include "play/weather_status.html" with session=session %}</dd></div>
+      </dl>
+
+      {% include "play/map_preview.html" with session=session %}
+      <p>{{ session.notes }}</p>
+
+      {% if can_withdraw_session %}
+        <div class="button-row">
+          <a class="button danger" href="{% url 'withdraw_session' session.pk %}">Withdraw from challenge</a>
+        </div>
+      {% endif %}
+      {% if can_cancel_session %}
+        <div class="button-row">
+          <a class="button danger" href="{% url 'cancel_session' session.pk %}">Cancel challenge</a>
+        </div>
+      {% endif %}
+
+      {% if can_record_score %}
+        <form method="post" class="score-card">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="score">
+          <h2>Record score</h2>
+          <p class="form-section-copy">Add the set score after play starts. Use the host/challenger columns the same way they appear above.</p>
+          <fieldset class="winner-toggle">
+            <legend>Winner</legend>
+            <div class="winner-toggle-options">
+              {% for radio in score_form.winner_side %}
+                <label class="winner-option">
+                  {{ radio.tag }}
+                  <span>{{ radio.choice_label }}</span>
+                </label>
+              {% endfor %}
+            </div>
+            {% for error in score_form.winner_side.errors %}<small class="error">{{ error }}</small>{% endfor %}
+          </fieldset>
+          <div class="score-grid">
+            <span></span>
+            <strong>{{ session.host_side_name }}</strong>
+            <strong>{{ session.challenger_side_name }}</strong>
+            <span>Set 1</span>
+            {{ score_form.set1_host }}
+            {{ score_form.set1_challenger }}
+            <span>Set 2</span>
+            {{ score_form.set2_host }}
+            {{ score_form.set2_challenger }}
+            <span>Set 3</span>
+            {{ score_form.set3_host }}
+            {{ score_form.set3_challenger }}
+          </div>
+          <button type="submit">Save score</button>
+        </form>
+      {% elif result %}
+        <p class="result-banner">
+          {{ result.winner_name }} won{% if result.score_summary %}, {{ result.score_summary }}{% endif %}. Prata, teh, or banter settlement is between friends.
+        </p>
+      {% endif %}
+    </article>
+
+    <aside class="panel">
+      <h2>Match sides</h2>
+      <div class="side-list">
+        {% for side in match_sides %}
+          <section class="side-card {% if side.is_open %}open-side{% endif %}">
+            <p class="eyebrow">{{ side.label }}</p>
+            <h3>{{ side.name }}</h3>
+            <div class="participant-list">
+              {% for item in side.players %}
+                <div class="participant">
+                  <span class="participant-main">
+                    {% if item.user.profile.avatar %}
+                      <img class="profile-avatar" src="{{ item.user.profile.avatar.url }}" alt="">
+                    {% elif item.user.profile.avatar_url %}
+                      <img class="profile-avatar" src="{{ item.user.profile.avatar_url }}" alt="">
+                    {% else %}
+                      <span class="profile-avatar placeholder">{{ item.name|slice:":1" }}</span>
+                    {% endif %}
+                    <span>
+                      <strong>{{ item.name }}</strong>
+                      <small>{{ item.user.profile.get_ntrp_level_display }}</small>
+                    </span>
+                  </span>
+                </div>
+              {% empty %}
+                <p class="empty">Waiting for a challenger.</p>
+              {% endfor %}
+            </div>
+          </section>
+        {% endfor %}
+      </div>
+    </aside>
+  </section>
+
+  {% if result %}
+    <section class="panel testimonials-panel" id="shoutouts" tabindex="-1">
+      <div class="section-title">
+        <div>
+          <p class="eyebrow">Match wrap-up</p>
+          <h2>Post-match shoutouts</h2>
+        </div>
+      </div>
+      {% if testimonial_items %}
+        <div class="testimonial-grid">
+          {% for item in testimonial_items %}
+            <form method="post" class="testimonial-card">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="testimonial">
+              <input type="hidden" name="reviewed_user_id" value="{{ item.player.id }}">
+              <h3>{{ item.player.get_full_name|default:item.player.username }}</h3>
+              {% if item.existing %}
+                <p class="form-section-copy">You already left a shoutout. Edit it here if the prata glow has changed your mind.</p>
+              {% endif %}
+              <fieldset class="rating-field" data-rating-group>
+                <legend>How likely are you to play with them again?</legend>
+                <div class="rating-stars">
+                  {% for radio in item.form.rating %}
+                    <label class="rating-star" data-rating-value="{{ radio.choice_label }}">
+                      {{ radio.tag }}
+                      <span aria-hidden="true">&#9733;</span>
+                    </label>
+                  {% endfor %}
+                </div>
+                {% for error in item.form.rating.errors %}<small class="error">{{ error }}</small>{% endfor %}
+              </fieldset>
+              <fieldset class="badge-field">
+                <legend>Want to give {{ item.player.get_full_name|default:item.player.username }} a badge?</legend>
+                <p class="form-section-copy">Pick up to 2. They will see these on their profile.</p>
+                <div class="badge-choice-grid" data-badge-grid>
+                  {% for checkbox in item.form.badges %}
+                    <label class="badge-choice">
+                      {{ checkbox.tag }}
+                      <span class="badge-icon" aria-hidden="true">
+                        {% if checkbox.data.value == "team_player" %}
+                          <svg viewBox="0 0 48 48" role="img">
+                            <circle cx="18" cy="18" r="6"></circle>
+                            <circle cx="31" cy="17" r="5"></circle>
+                            <path d="M9 36c2-7 7-10 13-10s10 3 12 10"></path>
+                            <path d="M27 28c4 0 8 2 10 8"></path>
+                          </svg>
+                        {% elif checkbox.data.value == "super_forehand" %}
+                          <svg viewBox="0 0 48 48" role="img">
+                            <path d="M17 30 31 16"></path>
+                            <path d="m29 14 5 5"></path>
+                            <path d="M14 33c5 4 13 4 20-1"></path>
+                            <path d="M13 20c-4 5-3 10 2 14"></path>
+                          </svg>
+                        {% elif checkbox.data.value == "super_backhand" %}
+                          <svg viewBox="0 0 48 48" role="img">
+                            <path d="M31 30 17 16"></path>
+                            <path d="m14 18 5-5"></path>
+                            <path d="M34 33c-5 4-13 4-20-1"></path>
+                            <path d="M35 20c4 5 3 10-2 14"></path>
+                          </svg>
+                        {% elif checkbox.data.value == "big_serve" %}
+                          <svg viewBox="0 0 48 48" role="img">
+                            <path d="M13 35c10-2 17-9 21-22"></path>
+                            <path d="M18 27c4 2 8 3 13 2"></path>
+                            <circle cx="34" cy="12" r="4"></circle>
+                            <path d="M10 38h19"></path>
+                          </svg>
+                        {% elif checkbox.data.value == "net_ninja" %}
+                          <svg viewBox="0 0 48 48" role="img">
+                            <path d="M11 31h26"></path>
+                            <path d="M14 18h20v13H14z"></path>
+                            <path d="M18 18v13M24 18v13M30 18v13"></path>
+                            <path d="M14 23h20M14 27h20"></path>
+                          </svg>
+                        {% elif checkbox.data.value == "court_coverage" %}
+                          <svg viewBox="0 0 48 48" role="img">
+                            <rect x="12" y="12" width="24" height="24" rx="3"></rect>
+                            <path d="M24 12v24M12 24h24"></path>
+                            <path d="M17 18c8 0 12 4 14 12"></path>
+                            <path d="M31 18c-8 0-12 4-14 12"></path>
+                          </svg>
+                        {% elif checkbox.data.value == "positive_energy" %}
+                          <svg viewBox="0 0 48 48" role="img">
+                            <circle cx="24" cy="24" r="9"></circle>
+                            <path d="M24 8v5M24 35v5M8 24h5M35 24h5"></path>
+                            <path d="m13 13 4 4M31 31l4 4M35 13l-4 4M17 31l-4 4"></path>
+                          </svg>
+                        {% elif checkbox.data.value == "fair_play" %}
+                          <svg viewBox="0 0 48 48" role="img">
+                            <path d="M24 11v25"></path>
+                            <path d="M15 18h18"></path>
+                            <path d="m15 18-6 10h12z"></path>
+                            <path d="m33 18-6 10h12z"></path>
+                            <path d="M17 38h14"></path>
+                          </svg>
+                        {% elif checkbox.data.value == "clutch" %}
+                          <svg viewBox="0 0 48 48" role="img">
+                            <circle cx="24" cy="24" r="14"></circle>
+                            <path d="M24 15v9l6 4"></path>
+                            <path d="M15 36c3-5 6-8 9-8s6 3 9 8"></path>
+                          </svg>
+                        {% elif checkbox.data.value == "prata_spirit" %}
+                          <svg viewBox="0 0 48 48" role="img">
+                            <path d="M12 28c4 7 20 7 24 0"></path>
+                            <path d="M14 25c5-5 15-7 22-2"></path>
+                            <path d="M16 29c6-3 13-3 19 0"></path>
+                            <path d="M20 19c1-4 7-4 8 0"></path>
+                          </svg>
+                        {% endif %}
+                      </span>
+                      <span class="badge-label">{{ checkbox.choice_label }}</span>
+                    </label>
+                  {% endfor %}
+                </div>
+                {% for error in item.form.badges.errors %}<small class="error">{{ error }}</small>{% endfor %}
+              </fieldset>
+              {% include "play/form_field.html" with field=item.form.text %}
+              <button type="submit">{% if item.existing %}Update shoutout{% else %}Save shoutout{% endif %}</button>
+            </form>
+          {% endfor %}
+        </div>
+      {% endif %}
+      <div class="testimonial-list">
+        {% for testimonial in received_testimonials %}
+          <article class="testimonial-read">
+            <strong>{{ testimonial.reviewed_user.get_full_name|default:testimonial.reviewed_user.username }}</strong>
+            <span>{{ testimonial.rating }} / 5 from {{ testimonial.reviewer.get_full_name|default:testimonial.reviewer.username }}</span>
+            <p>
+              {% for badge in testimonial.badge_labels %}
+                <mark>{{ badge }}</mark>
+              {% endfor %}
+            </p>
+            {% if testimonial.text %}<p>{{ testimonial.text }}</p>{% endif %}
+          </article>
+        {% empty %}
+          <p class="empty">No shoutouts yet.</p>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+
+  {% if can_access_chat %}
+    <section class="panel chat-panel">
+      <h2>Session chat</h2>
+      <div class="chat-thread">
+        {% for message in session.messages.all %}
+          <div class="chat-message {% if message.is_system %}system{% endif %}">
+            <span>{% if message.is_system %}System{% else %}{{ message.author.get_full_name|default:message.author.username }}{% endif %}</span>
+            <p>{{ message.body }}</p>
+          </div>
+        {% empty %}
+          <p class="empty">Chat will help players coordinate parking, balls, delays, and prata plans.</p>
+        {% endfor %}
+      </div>
+      <form method="post" class="chat-form">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="chat">
+        {{ chat_form.body }}
+        <button type="submit">Send</button>
+      </form>
+    </section>
+  {% else %}
+    <section class="panel chat-panel">
+      <h2>Session chat</h2>
+      <p class="empty">Chat opens after you join this challenge.</p>
+    </section>
+  {% endif %}
+  <script>
+    function wireCopyButton(copyButton, getUrl) {
+      if (!copyButton) return;
+      copyButton.addEventListener("click", async () => {
+        const url = getUrl();
+        try {
+          await navigator.clipboard.writeText(url);
+          copyButton.title = "Copied";
+          copyButton.setAttribute("aria-label", "Copied link");
+          copyButton.classList.add("copied");
+        } catch {
+          window.prompt("Copy this link:", url);
+          copyButton.classList.add("copied");
+        }
+      });
+    }
+    document.querySelectorAll("[data-copy-url]").forEach((button) => {
+      wireCopyButton(button, () => button.dataset.copyUrl);
+    });
+    document.querySelectorAll("[data-rating-group]").forEach((group) => {
+      const radios = Array.from(group.querySelectorAll("input[type='radio']"));
+      const labels = Array.from(group.querySelectorAll(".rating-star"));
+      function syncRating() {
+        const selected = Number(radios.find((radio) => radio.checked)?.value || 0);
+        labels.forEach((label) => {
+          label.classList.toggle("selected", Number(label.dataset.ratingValue) <= selected);
+        });
+      }
+      radios.forEach((radio) => radio.addEventListener("change", syncRating));
+      syncRating();
+    });
+    document.querySelectorAll("[data-badge-grid]").forEach((grid) => {
+      const choices = Array.from(grid.querySelectorAll(".badge-choice"));
+      const inputs = choices.map((choice) => choice.querySelector("input[type='checkbox']"));
+      function syncBadges() {
+        const selectedCount = inputs.filter((input) => input.checked).length;
+        choices.forEach((choice, index) => {
+          const input = inputs[index];
+          choice.classList.toggle("selected", input.checked);
+          input.disabled = selectedCount >= 2 && !input.checked;
+        });
+      }
+      inputs.forEach((input) => input.addEventListener("change", syncBadges));
+      syncBadges();
+    });
+  </script>
+{% endblock %}

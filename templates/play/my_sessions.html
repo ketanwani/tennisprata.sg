@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}My sessions{% endblock %}
+{% block content %}
+  <section class="panel leaderboard-page">
+    <div class="session-title-row">
+      <div class="title-with-back">
+        <a class="icon-button" href="{% url 'dashboard' %}" aria-label="Back to dashboard" title="Back to dashboard">
+          <svg aria-hidden="true" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 12H5"></path>
+            <path d="m12 19-7-7 7-7"></path>
+          </svg>
+        </a>
+        <div>
+          <p class="eyebrow">Your prata calendar</p>
+          <h1>My sessions</h1>
+          <p class="lede">Track upcoming matches, record scores after play starts, and leave post-match shoutouts.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="session-workflow-grid">
+    {% include "play/session_bucket.html" with title="Needs result" items=needs_result_items empty_text="Started sessions needing scores will appear here." %}
+    {% include "play/session_bucket.html" with title="Upcoming" items=upcoming_items empty_text="Upcoming sessions you join or host will appear here." %}
+    {% include "play/session_bucket.html" with title="Completed" items=completed_items empty_text="Completed sessions will appear here." %}
+    {% include "play/session_bucket.html" with title="Cancelled" items=cancelled_items empty_text="Cancelled sessions will appear here." %}
+  </section>
+{% endblock %}

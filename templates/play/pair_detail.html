@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}{{ pair.name }}{% endblock %}
+{% block content %}
+  <section class="layout">
+    <article class="panel">
+      <div class="session-title-row">
+        <div class="title-with-back">
+          <a class="icon-button" href="{% url 'profile' %}" aria-label="Back to profile" title="Back to profile">
+            <svg aria-hidden="true" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 12H5"></path>
+              <path d="m12 19-7-7 7-7"></path>
+            </svg>
+          </a>
+          <div>
+            <p class="eyebrow">{{ pair.group.name }}</p>
+            <h1>{{ pair.display_name }}</h1>
+          </div>
+        </div>
+      </div>
+      <div class="pair-status-card">
+        <span class="status-pill">{{ pair.get_status_display }}</span>
+        <p>
+          {% if pair.status == "confirmed" %}
+            This pair is ready for prata challenges and leaderboard results.
+          {% elif pair.status == "pending" %}
+            {% if pair.players.count == 1 %}
+              Partner needed. Share a fresh invite link when you are ready to form this pair again.
+            {% else %}
+              Waiting for your partner to accept the invite link.
+            {% endif %}
+          {% else %}
+            This was created for a one-off session.
+          {% endif %}
+        </p>
+      </div>
+      {% if pair.status == "pending" %}
+        <div class="form-section">
+          <h2>{% if pair.players.count == 1 %}Invite new partner{% else %}Partner invite{% endif %}</h2>
+          {% if can_manage_invite %}
+            <p class="form-section-copy">Add a name or contact if you want to target the invite, or just copy the link and send it yourself.</p>
+            <form method="post" action="{% url 'update_pair_invite' pair.pk %}" class="form-grid">
+              {% csrf_token %}
+              {% include "play/form_field.html" with field=invite_form.partner_name %}
+              {% include "play/form_field.html" with field=invite_form.partner_contact %}
+              <button type="submit">Refresh invite link</button>
+            </form>
+          {% endif %}
+          <span class="invite-copy-field">
+            <a href="{{ pair.accept_url }}">{{ request.scheme }}://{{ request.get_host }}{{ pair.accept_url }}</a>
+            <button class="icon-button small-icon-button" type="button" data-copy-url="{{ request.scheme }}://{{ request.get_host }}{{ pair.accept_url }}" aria-label="Copy pair invite link" title="Copy pair invite link">
+              <svg class="copy-icon" aria-hidden="true" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="8" y="8" width="10" height="10" rx="2"></rect>
+                <path d="M6 16H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              <svg class="check-icon" aria-hidden="true" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m20 6-11 11-5-5"></path>
+              </svg>
+            </button>
+          </span>
+        </div>
+      {% endif %}
+      {% if can_leave_pair %}
+        <div class="button-row">
+          <a class="button danger" href="{% url 'leave_pair' pair.pk %}">Leave pair</a>
+        </div>
+      {% endif %}
+    </article>
+    <aside class="panel">
+      <h2>Players</h2>
+      <div class="participant-list">
+        {% for player in pair.players.all %}
+          <div class="participant">
+            <span class="participant-main">
+              {% if player.profile.avatar %}
+                <img class="profile-avatar" src="{{ player.profile.avatar.url }}" alt="">
+              {% elif player.profile.avatar_url %}
+                <img class="profile-avatar" src="{{ player.profile.avatar_url }}" alt="">
+              {% else %}
+                <span class="profile-avatar placeholder">{{ player.get_full_name|default:player.username|slice:":1" }}</span>
+              {% endif %}
+              <span>
+                <strong>{{ player.get_full_name|default:player.username }}</strong>
+                <small>{{ player.profile.get_ntrp_level_display }}</small>
+              </span>
+            </span>
+          </div>
+        {% empty %}
+          <p class="empty">No players are attached to this pair yet.</p>
+        {% endfor %}
+      </div>
+    </aside>
+  </section>
+  <section class="panel chat-panel">
+    <h2>Pair matches</h2>
+    <div class="session-list">
+      {% for match in matches %}
+        <article class="history-row">
+          <strong><a href="{{ match.get_absolute_url }}">{{ match.title }}</a></strong>
+          <span>{{ match.starts_at|date:"j M" }} - {{ match.get_status_display }}</span>
+        </article>
+      {% empty %}
+        <p class="empty">Matches for this pair will appear here.</p>
+      {% endfor %}
+    </div>
+  </section>
+  <script>
+    document.querySelectorAll("[data-copy-url]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(button.dataset.copyUrl);
+          button.classList.add("copied");
+          button.title = "Copied";
+          button.setAttribute("aria-label", "Copied link");
+        } catch (error) {
+          button.classList.add("copied");
+        }
+      });
+    });
+  </script>
+{% endblock %}

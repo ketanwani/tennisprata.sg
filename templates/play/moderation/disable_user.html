@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Disable user{% endblock %}
+{% block content %}
+  <section class="narrow panel">
+    <p class="eyebrow">Moderation</p>
+    <h1>Disable user</h1>
+    <p class="lede">{{ target.get_full_name|default:target.username }} will no longer be able to log in. You can also block their email or phone from future registration.</p>
+    <form method="post" class="form-grid">
+      {% csrf_token %}
+      {% include "play/form_fields.html" with form=form %}
+      <button class="danger" type="submit">Disable user</button>
+      <a class="button secondary" href="{% url 'moderation_dashboard' %}">Back</a>
+    </form>
+  </section>
+{% endblock %}

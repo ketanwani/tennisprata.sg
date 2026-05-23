@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% block title %}Profile{% endblock %}
+{% block content %}
+  <section class="layout">
+    <article class="panel">
+      <div class="profile-heading">
+        {% if profile_obj.avatar %}
+          <img class="profile-avatar large" src="{{ profile_obj.avatar.url }}" alt="">
+        {% elif profile_obj.avatar_url %}
+          <img class="profile-avatar large" src="{{ profile_obj.avatar_url }}" alt="">
+        {% else %}
+          <div class="profile-avatar large placeholder">{{ user.get_full_name|default:user.username|slice:":1" }}</div>
+        {% endif %}
+        <div>
+          <h1>Your profile</h1>
+          <p class="lede">Upload a profile photo so other players can recognize you before the session.</p>
+        </div>
+      </div>
+      <form method="post" enctype="multipart/form-data" class="form-grid profile-form">
+        {% csrf_token %}
+        <div class="form-section">
+          <h2>Identity</h2>
+          {% include "play/form_field.html" with field=form.full_name %}
+          {% include "play/form_field.html" with field=form.email %}
+          {% include "play/form_field.html" with field=form.phone %}
+        </div>
+        <div class="form-section">
+          <h2>Player info</h2>
+          <p class="form-section-copy"><a href="https://www.usta.com/en/home/coach-organize/tennis-tool-center/run-usta-programs/national/understanding-ntrp-ratings.html" target="_blank" rel="noreferrer">Learn how NTRP levels work</a></p>
+          {% include "play/form_field.html" with field=form.ntrp_level %}
+          {% include "play/form_field.html" with field=form.home_courts %}
+          {% include "play/form_field.html" with field=form.bio %}
+        </div>
+        <div class="form-section">
+          <h2>Photo</h2>
+          {% include "play/form_field.html" with field=form.avatar %}
+          <details class="advanced-fields">
+            <summary>Use image URL instead</summary>
+            {% include "play/form_field.html" with field=form.avatar_url %}
+          </details>
+        </div>
+        <div class="form-section">
+          <h2>Reminders</h2>
+          <div class="toggle-list">
+            {% include "play/form_field.html" with field=form.reminders_by_email %}
+            {% include "play/form_field.html" with field=form.reminders_by_sms %}
+            {% include "play/form_field.html" with field=form.reminders_by_whatsapp %}
+          </div>
+        </div>
+        <button type="submit">Update profile</button>
+      </form>
+    </article>
+    <aside class="panel">
+      <h2>Player card</h2>
+      <div class="profile-stats">
+        <div>
+          <strong>{{ stats.singles_wins }}W {{ stats.singles_losses }}L</strong>
+          <span>Singles</span>
+        </div>
+        <div>
+          <strong>{{ stats.doubles_wins }}W {{ stats.doubles_losses }}L</strong>
+          <span>Doubles</span>
+        </div>
+        <div>
+          <strong>{% if reputation.average %}{{ reputation.average|floatformat:1 }} / 5{% else %}-{% endif %}</strong>
+          <span>{{ reputation.count }} shoutout{{ reputation.count|pluralize }}</span>
+        </div>
+      </div>
+      {% if reputation.top_badges %}
+        <div class="badge-cloud">
+          {% for badge, count in reputation.top_badges %}
+            <span>{{ badge }} <small>{{ count }}</small></span>
+          {% endfor %}
+        </div>
+      {% endif %}
+      <h2 id="pair-invites">Pair invites</h2>
+      <div class="pair-list">
+        {% for invite in pair_invites %}
+          <div class="history-row invite-row">
+            <span>
+              <strong>{{ invite.display_name }}</strong>
+              <small>
+                Invited by
+                {% for player in invite.players.all %}
+                  {{ player.get_full_name|default:player.username }}{% if not forloop.last %}, {% endif %}
+                {% empty %}
+                  someone in {{ invite.group.name }}
+                {% endfor %}
+              </small>
+              {% if invite.invited_name %}<small>For {{ invite.invited_name }}</small>{% endif %}
+            </span>
+            <a class="button small-button" href="{{ invite.accept_url }}">Review</a>
+          </div>
+        {% empty %}
+          <p class="empty">Pair invites sent to your email or phone will appear here.</p>
+        {% endfor %}
+      </div>
+      <h2>Notifications</h2>
+      <div class="notification-list">
+        {% for notification in notifications %}
+          <a class="notification-card" href="{{ notification.url|default:'#' }}">
+            <strong>{{ notification.title }}</strong>
+            <span>{{ notification.body }}</span>
+            <small>{{ notification.created_at|timesince }} ago</small>
+          </a>
+        {% empty %}
+          <p class="empty">Pair and session updates will appear here.</p>
+        {% endfor %}
+      </div>
+      <h2>Your pairs</h2>
+      <div class="pair-list">
+        {% for pair in pairs %}
+          <div class="history-row">
+            <span>
+              <strong><a href="{% url 'pair_detail' pair.id %}">{{ pair.display_name }}</a></strong>
+              <small>{{ pair.get_status_display }}</small>
+              {% if pair.status == "pending" %}
+                <small><a href="{{ pair.accept_url }}">{{ request.scheme }}://{{ request.get_host }}{{ pair.accept_url }}</a></small>
+              {% endif %}
+            </span>
+          </div>
+        {% empty %}
+          <p class="empty">Create a pair or join a challenge with a partner.</p>
+        {% endfor %}
+      </div>
+      <h2>Shoutouts received</h2>
+      <div class="testimonial-list compact">
+        {% for testimonial in reputation.recent %}
+          <article class="testimonial-read">
+            <strong>{{ testimonial.rating }} / 5 from {{ testimonial.reviewer.get_full_name|default:testimonial.reviewer.username }}</strong>
+            <span>{{ testimonial.session.title }}</span>
+            <p>
+              {% for badge in testimonial.badge_labels %}
+                <mark>{{ badge }}</mark>
+              {% endfor %}
+            </p>
+            {% if testimonial.text %}<p>{{ testimonial.text }}</p>{% endif %}
+          </article>
+        {% empty %}
+          <p class="empty">Post-match testimonials will appear here.</p>
+        {% endfor %}
+      </div>
+    </aside>
+  </section>
+{% endblock %}

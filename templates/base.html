@@ -1,0 +1,61 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}tennisprata.sg{% endblock %}</title>
+    <link rel="icon" href="{% static 'play/icon.svg' %}" type="image/svg+xml">
+    <link rel="stylesheet" href="{% static 'play/styles.css' %}?v=dashboard-invite-card-1">
+    <script src="{% static 'play/ntrp-slider.js' %}?v=6" defer></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="{% url 'dashboard' %}">
+        <span class="brand-mark" aria-hidden="true">
+          <span class="brand-racket"></span>
+          <span class="brand-prata"></span>
+          <span class="brand-ball"></span>
+        </span>
+        <span>tennisprata.sg</span>
+      </a>
+      <nav>
+        {% if user.is_authenticated %}
+          <a href="{% url 'dashboard' %}">Dashboard</a>
+          <a href="{% url 'my_sessions' %}">My sessions</a>
+          <a href="{% url 'create_session' %}">Create</a>
+          <a href="{% url 'leaderboard' %}">Leaderboard</a>
+          <a href="{% url 'profile' %}">Profile</a>
+          {% if user.is_staff %}
+            <a href="{% url 'moderation_dashboard' %}">Moderation</a>
+          {% endif %}
+          <form method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button class="link-button" type="submit">Logout</button>
+          </form>
+        {% else %}
+          <a href="{% url 'dashboard' %}">Home</a>
+          <a href="{% url 'login' %}">Login</a>
+          <a class="nav-cta" href="{% url 'signup' %}">Join</a>
+        {% endif %}
+      </nav>
+    </header>
+
+    {% if messages %}
+      <div class="toast-stack" role="status" aria-live="polite">
+        {% for message in messages %}
+          <div class="toast toast-{{ message.tags|default:'info' }}">
+            <strong>
+              {% if "error" in message.tags %}Could not save{% elif "success" in message.tags %}Saved{% else %}Notice{% endif %}
+            </strong>
+            <span>{{ message }}</span>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <main class="page">
+      {% block content %}{% endblock %}
+    </main>
+  </body>
+</html>

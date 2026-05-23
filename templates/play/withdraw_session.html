@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Withdraw from challenge{% endblock %}
+{% block content %}
+  <section class="narrow panel invite-panel">
+    <p class="eyebrow">{{ session.group.name }}</p>
+    <h1>Withdraw from {{ session.title }}?</h1>
+    <p class="lede">This will remove {{ session.challenger_side_name }} from the challenger side and reopen the challenge.</p>
+
+    <dl class="details">
+      <div><dt>When</dt><dd>{{ session.starts_at|date:"D, j M, g:i A" }}</dd></div>
+      <div><dt>Court</dt><dd>{{ session.court_name }}</dd></div>
+      <div><dt>Type</dt><dd>{{ session.get_match_type_display }}</dd></div>
+      <div><dt>{% if session.is_singles %}Host player{% else %}Host pair{% endif %}</dt><dd>{{ session.host_side_name }}</dd></div>
+      <div><dt>{% if session.is_singles %}Challenger player{% else %}Challenger pair{% endif %}</dt><dd>{{ session.challenger_side_name }}</dd></div>
+    </dl>
+
+    <div class="button-row">
+      <form method="post">
+        {% csrf_token %}
+        <button class="danger" type="submit">Withdraw from challenge</button>
+      </form>
+      <a class="button secondary" href="{{ session.get_absolute_url }}">Stay in challenge</a>
+    </div>
+  </section>
+{% endblock %}

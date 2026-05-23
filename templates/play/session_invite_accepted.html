@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Challenge accepted{% endblock %}
+{% block content %}
+  <section class="narrow panel invite-panel confirmation-panel">
+    <p class="eyebrow">{{ session.group.name }}</p>
+    <h1>Challenge accepted</h1>
+    <p class="lede">{{ session.challenger_side_name }} joined {{ session.title }}. The match is now confirmed.</p>
+
+    <div class="pair-preview-card">
+      <span class="status-pill">{{ session.get_status_display }}</span>
+      <dl class="details">
+        <div><dt>When</dt><dd>{{ session.starts_at|date:"D, j M, g:i A" }}</dd></div>
+        <div><dt>Type</dt><dd>{{ session.get_match_type_display }}</dd></div>
+        <div><dt>Court</dt><dd>{{ session.court_name }}</dd></div>
+        <div><dt>{% if session.is_singles %}Host player{% else %}Host pair{% endif %}</dt><dd>{{ session.host_side_name }}</dd></div>
+        <div><dt>{% if session.is_singles %}Challenger player{% else %}Challenger pair{% endif %}</dt><dd>{{ session.challenger_side_name }}</dd></div>
+        <div><dt>Weather</dt><dd>{% include "play/weather_status.html" with session=session %}</dd></div>
+      </dl>
+    </div>
+
+    <div class="button-row">
+      <a class="button" href="{{ session.get_absolute_url }}">View session</a>
+      <a class="button secondary" href="{% url 'dashboard' %}">Back to dashboard</a>
+    </div>
+  </section>
+{% endblock %}

@@ -1,0 +1,19 @@
+.env
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.sqlite3
+.pytest_cache/
+
+staticfiles/
+media/
+postgres_data/
+celerybeat-schedule
+
+*.log
+.DS_Store
+Thumbs.db
+
+# Local reference screenshots and captures
+rovo-signin.png

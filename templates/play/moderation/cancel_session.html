@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Cancel session{% endblock %}
+{% block content %}
+  <section class="narrow panel">
+    <p class="eyebrow">Moderation</p>
+    <h1>Cancel session</h1>
+    <p class="lede">{{ session.title }} at {{ session.court_name }} on {{ session.starts_at|date:"D, j M, g:i A" }}</p>
+    <form method="post" class="form-grid">
+      {% csrf_token %}
+      {% include "play/form_fields.html" with form=form %}
+      <button class="danger" type="submit">Cancel session</button>
+      <a class="button secondary" href="{% url 'moderation_dashboard' %}">Back</a>
+    </form>
+  </section>
+{% endblock %}

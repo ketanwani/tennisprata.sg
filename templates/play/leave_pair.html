@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Leave pair{% endblock %}
+{% block content %}
+  <section class="narrow panel invite-panel">
+    <p class="eyebrow">{{ pair.group.name }}</p>
+    <h1>Leave {{ pair.display_name }}?</h1>
+    <p class="lede">You will be removed from this pair. Match history will stay intact, but the pair will stop being confirmed if fewer than two players remain.</p>
+
+    <div class="pair-preview-card">
+      <span class="status-pill">{{ pair.get_status_display }}</span>
+      <div class="participant-list">
+        {% for player in pair.players.all %}
+          <div class="participant">
+            <span class="participant-main">
+              {% if player.profile.avatar %}
+                <img class="profile-avatar" src="{{ player.profile.avatar.url }}" alt="">
+              {% elif player.profile.avatar_url %}
+                <img class="profile-avatar" src="{{ player.profile.avatar_url }}" alt="">
+              {% else %}
+                <span class="profile-avatar placeholder">{{ player.get_full_name|default:player.username|slice:":1" }}</span>
+              {% endif %}
+              <span>
+                <strong>{{ player.get_full_name|default:player.username }}</strong>
+                <small>{{ player.profile.get_ntrp_level_display }}</small>
+              </span>
+            </span>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="button-row">
+      <form method="post">
+        {% csrf_token %}
+        <button class="danger" type="submit">Leave pair</button>
+      </form>
+      <a class="button secondary" href="{% url 'pair_detail' pair.pk %}">Stay in pair</a>
+    </div>
+  </section>
+{% endblock %}

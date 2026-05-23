@@ -1,0 +1,18 @@
+<div class="weather-status risk-{{ session.weather_risk|lower }}">
+  <span class="weather-scene" aria-hidden="true">
+    <span class="weather-sun"></span>
+    <span class="weather-cloud"></span>
+    <span class="weather-rain rain-one"></span>
+    <span class="weather-rain rain-two"></span>
+    <span class="weather-rain rain-three"></span>
+  </span>
+  <span>
+    {% if session.weather_risk == "Unknown" or session.weather_risk == "Pending" %}
+      <strong>Rain forecast unavailable</strong>
+      <small>{{ session.weather_summary|default:"We'll check again closer to the session." }}</small>
+    {% else %}
+      <strong>{{ session.weather_risk|default:"Low" }} rain risk</strong>
+      <small>{{ session.weather_summary|default:"Weather check pending" }}</small>
+    {% endif %}
+  </span>
+</div>

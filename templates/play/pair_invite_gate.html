@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Pair invite{% endblock %}
+{% block content %}
+  <section class="narrow panel invite-panel">
+    <p class="eyebrow">{{ pair.group.name }}</p>
+    <h1>Pair invite</h1>
+    <p class="lede">You have been invited to join {{ pair.display_name }}. Log in if you already have an account, or create one first.</p>
+
+    <div class="pair-preview-card">
+      <span class="status-pill">{{ pair.get_status_display }}</span>
+      <div class="participant-list">
+        {% for player in pair.players.all %}
+          <div class="participant">
+            <span class="participant-main">
+              {% if player.profile.avatar %}
+                <img class="profile-avatar" src="{{ player.profile.avatar.url }}" alt="">
+              {% elif player.profile.avatar_url %}
+                <img class="profile-avatar" src="{{ player.profile.avatar_url }}" alt="">
+              {% else %}
+                <span class="profile-avatar placeholder">{{ player.get_full_name|default:player.username|slice:":1" }}</span>
+              {% endif %}
+              <span>
+                <strong>{{ player.get_full_name|default:player.username }}</strong>
+                <small>{{ player.profile.get_ntrp_level_display }}</small>
+              </span>
+            </span>
+          </div>
+        {% empty %}
+          <p class="empty">This pair is waiting for players.</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="button-row">
+      <a class="button" href="{% url 'login' %}">Login to accept</a>
+      <a class="button secondary" href="{% url 'signup' %}">Create account</a>
+    </div>
+  </section>
+{% endblock %}

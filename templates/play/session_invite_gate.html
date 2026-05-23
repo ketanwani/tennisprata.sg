@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Challenge invite{% endblock %}
+{% block content %}
+  <section class="layout invite-layout">
+    <article class="panel">
+      {% if hide_details %}
+        <p class="eyebrow">Private session</p>
+        <h1>Login to view this challenge</h1>
+        <p class="lede">Session details are visible only after you log in or create an account.</p>
+      {% else %}
+        <p class="eyebrow">{{ session.group.name }}</p>
+        <h1>Challenge invite</h1>
+        <p class="lede">{{ session.host_side_name }} is looking for {% if session.is_singles %}a singles challenger{% else %}challengers{% endif %} for {{ session.title }}.</p>
+        <dl class="details">
+          <div><dt>Type</dt><dd>{{ session.get_match_type_display }}</dd></div>
+          <div><dt>When</dt><dd>{{ session.starts_at|date:"D, j M, g:i A" }}</dd></div>
+          <div><dt>Court</dt><dd>{{ session.court_name }}</dd></div>
+          <div><dt>Level</dt><dd>{{ session.level_min }} to {{ session.level_max }}</dd></div>
+          <div><dt>Weather</dt><dd>{% include "play/weather_status.html" with session=session %}</dd></div>
+          <div><dt>Prata vibes</dt><dd>{{ session.prata_terms|default:"No prata stakes. Just tennis and pride." }}</dd></div>
+        </dl>
+      {% endif %}
+    </article>
+    <aside class="panel invite-panel">
+      <p class="eyebrow">{% if hide_details %}Continue{% else %}Join this challenge{% endif %}</p>
+      <h2>Login or create an account</h2>
+      <p class="lede">
+        {% if hide_details %}
+          After that, we will bring you back to this session.
+        {% elif session.is_singles %}
+          After that, you can accept as the singles challenger.
+        {% else %}
+          After that, choose one of your confirmed pairs to join the challenge. No pair yet? Create one first and invite your partner.
+        {% endif %}
+      </p>
+      <div class="button-row">
+        <a class="button" href="{% url 'login' %}">{% if hide_details %}Login to view{% else %}Login to join{% endif %}</a>
+        <a class="button secondary" href="{% url 'signup' %}">Create account</a>
+      </div>
+    </aside>
+  </section>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Create pair{% endblock %}
+{% block content %}
+  <section class="narrow panel">
+    <div class="session-title-row">
+      <div class="title-with-back">
+        <a class="icon-button" href="{% url 'dashboard' %}" aria-label="Back to home" title="Back to home">
+          <svg aria-hidden="true" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 12H5"></path>
+            <path d="m12 19-7-7 7-7"></path>
+          </svg>
+        </a>
+        <div>
+          <p class="eyebrow">{{ group.name }}</p>
+          <h1>Create pair</h1>
+        </div>
+      </div>
+    </div>
+    <p class="lede">Create a regular doubles pair now, or invite your partner and keep it pending until they accept.</p>
+    <form method="post" class="form-grid">
+      {% csrf_token %}
+      <div class="form-section">
+        <h2>Pair identity</h2>
+        {% include "play/form_field.html" with field=form.name %}
+        {% include "play/form_field.html" with field=form.is_regular %}
+      </div>
+      <div class="form-section">
+        <h2>Partner invite</h2>
+        <p class="form-section-copy">Leave this blank if both players are already represented, or add a contact so your partner can accept later.</p>
+        {% include "play/form_field.html" with field=form.partner_name %}
+        {% include "play/form_field.html" with field=form.partner_contact %}
+      </div>
+      <button type="submit">Save pair</button>
+    </form>
+  </section>
+{% endblock %}

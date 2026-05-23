@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% load socialaccount %}
+{% block title %}Join tennisprata.sg{% endblock %}
+{% block content %}
+  <section class="narrow panel">
+    <p class="eyebrow">Join the group</p>
+    <h1>Create profile</h1>
+    <p class="lede">Use email, phone number, or both. Only one contact method is needed to create your profile.</p>
+    <p class="setup-note">Already have an account? <a href="{% url 'login' %}">Login instead</a>.</p>
+    {% if google_oauth_enabled %}
+      <a class="button google-button" href="{% provider_login_url 'google' process='login' %}">Continue with Google</a>
+    {% else %}
+      <button class="button google-button disabled" type="button" disabled>Google signup pending setup</button>
+      <p class="setup-note">Add Google OAuth credentials in Django admin to enable this button.</p>
+    {% endif %}
+    <div class="divider"><span>or</span></div>
+    <form method="post" class="form-grid">
+      {% csrf_token %}
+      {% include "play/form_fields.html" with form=form hide_labels=True hide_help=True %}
+      <button type="submit">Create account</button>
+    </form>
+  </section>
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Pair invite{% endblock %}
+{% block content %}
+  <section class="narrow panel invite-panel">
+    <p class="eyebrow">{{ pair.group.name }}</p>
+    <h1>Join {{ pair.display_name }}</h1>
+    {% if invite_full %}
+      <p class="lede">This pair already has two players, so the invite is no longer open.</p>
+    {% elif already_joined %}
+      <p class="lede">You are already part of this pair. Time to find opponents and make the prata stakes official.</p>
+    {% else %}
+      <p class="lede">Accept this invite to become the second player in this doubles pair.</p>
+    {% endif %}
+
+    <div class="pair-preview-card">
+      <span class="status-pill">{{ pair.get_status_display }}</span>
+      <div class="participant-list">
+        {% for player in pair.players.all %}
+          <div class="participant">
+            <span class="participant-main">
+              {% if player.profile.avatar %}
+                <img class="profile-avatar" src="{{ player.profile.avatar.url }}" alt="">
+              {% elif player.profile.avatar_url %}
+                <img class="profile-avatar" src="{{ player.profile.avatar_url }}" alt="">
+              {% else %}
+                <span class="profile-avatar placeholder">{{ player.get_full_name|default:player.username|slice:":1" }}</span>
+              {% endif %}
+              <span>
+                <strong>{{ player.get_full_name|default:player.username }}</strong>
+                <small>{{ player.profile.get_ntrp_level_display }}</small>
+              </span>
+            </span>
+          </div>
+        {% endfor %}
+        {% if pair.invited_name %}
+          <div class="participant">
+            <span class="participant-main">
+              <span class="profile-avatar placeholder">{{ pair.invited_name|slice:":1" }}</span>
+              <span>
+                <strong>{{ pair.invited_name }}</strong>
+                <small>Invited partner</small>
+              </span>
+            </span>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="button-row">
+      {% if invite_full %}
+        {% if can_view_pair %}
+          <a class="button" href="{% url 'pair_detail' pair.pk %}">View pair</a>
+        {% endif %}
+        <a class="button secondary" href="{% url 'dashboard' %}">Back to sessions</a>
+      {% elif already_joined %}
+        <a class="button" href="{% url 'pair_detail' pair.pk %}">View pair</a>
+      {% else %}
+        <form method="post">
+          {% csrf_token %}
+          <button type="submit">Accept pair invite</button>
+        </form>
+        <a class="button secondary" href="{% url 'dashboard' %}">Not now</a>
+      {% endif %}
+    </div>
+  </section>
+{% endblock %}

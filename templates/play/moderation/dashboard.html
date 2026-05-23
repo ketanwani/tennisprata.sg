@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Moderation{% endblock %}
+{% block content %}
+  <section class="dashboard-head">
+    <div>
+      <p class="eyebrow">Staff tools</p>
+      <h1>Moderation</h1>
+      <p>Cancel sessions, disable users, and block emails or phone numbers from registering or logging in.</p>
+    </div>
+  </section>
+
+  <section class="moderation-grid">
+    <article class="panel moderation-wide">
+      <h2>Recent sessions</h2>
+      <div class="moderation-table" role="region" aria-label="Recent sessions" tabindex="0">
+        <div class="moderation-row moderation-header">
+          <span>Session</span>
+          <span>Status</span>
+          <span>Host</span>
+          <span>Action</span>
+        </div>
+        {% for session in sessions %}
+          <div class="moderation-row">
+            <span>
+              <strong>{{ session.title }}</strong>
+              <small>{{ session.starts_at|date:"j M, g:i A" }} - {{ session.court_name }}</small>
+            </span>
+            <span>{{ session.get_status_display }}</span>
+            <span>{{ session.host.get_full_name|default:session.host.username }}</span>
+            <span>
+              {% if session.status != "cancelled" %}
+                <a class="button danger small-button" href="{% url 'moderation_cancel_session' session.id %}">Cancel</a>
+              {% else %}
+                <small>{{ session.cancel_reason|default:"Cancelled" }}</small>
+              {% endif %}
+            </span>
+          </div>
+        {% empty %}
+          <p class="empty">No sessions yet.</p>
+        {% endfor %}
+      </div>
+    </article>
+
+    <article class="panel">
+      <h2>Recent users</h2>
+      <div class="moderation-table compact" role="region" aria-label="Recent users" tabindex="0">
+        <div class="moderation-row moderation-header">
+          <span>User</span>
+          <span>Status</span>
+          <span>Action</span>
+        </div>
+        {% for listed_user in users %}
+          <div class="moderation-row">
+            <span>
+              <strong>{{ listed_user.get_full_name|default:listed_user.username }}</strong>
+              <small>{{ listed_user.email|default:"No email" }}{% if listed_user.profile.phone %} - {{ listed_user.profile.phone }}{% endif %}</small>
+            </span>
+            <span>{% if listed_user.is_active %}Active{% else %}Disabled{% endif %}</span>
+            <span>
+              {% if listed_user.is_active and listed_user != user %}
+                <a class="button danger small-button" href="{% url 'moderation_disable_user' listed_user.id %}">Disable</a>
+              {% else %}
+                <small>No action</small>
+              {% endif %}
+            </span>
+          </div>
+        {% empty %}
+          <p class="empty">No users yet.</p>
+        {% endfor %}
+      </div>
+    </article>
+
+    <article class="panel">
+      <h2>Block email or phone</h2>
+      <form method="post" class="form-grid">
+        {% csrf_token %}
+        {% include "play/form_fields.html" with form=block_form %}
+        <button type="submit">Add block</button>
+      </form>
+      <div class="blocked-list">
+        {% for blocked in blocked_identities %}
+          <div class="blocked-row">
+            <span>
+              <strong>{{ blocked.get_identity_type_display }}</strong>
+              <small>{{ blocked.value }}</small>
+            </span>
+            <form method="post" action="{% url 'moderation_unblock_identity' blocked.id %}">
+              {% csrf_token %}
+              <button class="button secondary small-button" type="submit">Unblock</button>
+            </form>
+          </div>
+        {% empty %}
+          <p class="empty">No blocked identities.</p>
+        {% endfor %}
+      </div>
+    </article>
+  </section>
+{% endblock %}

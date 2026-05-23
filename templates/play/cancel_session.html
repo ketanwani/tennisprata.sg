@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Cancel challenge{% endblock %}
+{% block content %}
+  <section class="narrow panel invite-panel">
+    <p class="eyebrow">{{ session.group.name }}</p>
+    <h1>Cancel {{ session.title }}?</h1>
+    <p class="lede">Only the creator pair can cancel this challenge. Cancelling keeps the record visible and tells joined players that the match is off.</p>
+
+    <dl class="details">
+      <div><dt>When</dt><dd>{{ session.starts_at|date:"D, j M, g:i A" }}</dd></div>
+      <div><dt>Court</dt><dd>{{ session.court_name }}</dd></div>
+      <div><dt>Type</dt><dd>{{ session.get_match_type_display }}</dd></div>
+      <div><dt>{% if session.is_singles %}Host player{% else %}Host pair{% endif %}</dt><dd>{{ session.host_side_name }}</dd></div>
+      <div><dt>{% if session.is_singles %}Challenger player{% else %}Challenger pair{% endif %}</dt><dd>{{ session.challenger_side_name }}</dd></div>
+    </dl>
+
+    <form method="post" class="form-grid">
+      {% csrf_token %}
+      {% include "play/form_fields.html" with form=form %}
+      <div class="button-row">
+        <button class="danger" type="submit" name="action" value="cancel">Cancel challenge</button>
+        <a class="button secondary" href="{{ session.get_absolute_url }}">Keep challenge</a>
+      </div>
+    </form>
+
+    {% if can_delete_session %}
+      <div class="form-section">
+        <h2>Delete instead</h2>
+        <p class="form-section-copy">Delete is only available while the challenge is open and no challenger has joined. This removes the challenge from the app.</p>
+        <form method="post">
+          {% csrf_token %}
+          <button class="danger" type="submit" name="action" value="delete">Delete challenge</button>
+        </form>
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}

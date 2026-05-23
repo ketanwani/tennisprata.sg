@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>tennisprata.sg</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">tennisprata.sg</p>
+          <h1>Doubles challenges where the losing pair buys prata.</h1>
+          <p class="hero-copy">
+            Schedule court details, invite rival pairs, track standings, and check the latest Singapore
+            rain outlook before the match.
+          </p>
+        </div>
+        <div class="hero-panel">
+          <div class="stat">
+            <span id="activeSessions">0</span>
+            <small>Open prata sessions</small>
+          </div>
+          <div class="stat">
+            <span id="topPair">-</span>
+            <small>Pair to beat</small>
+          </div>
+        </div>
+      </section>
+
+      <section class="workspace">
+        <aside class="panel auth-panel">
+          <h2>Player Check-in</h2>
+          <form id="profileForm" class="stack">
+            <label>
+              Name
+              <input id="playerName" name="playerName" placeholder="e.g. Ketan" required />
+            </label>
+            <label>
+              Email or phone
+              <input id="playerContact" name="playerContact" placeholder="you@example.com or +65..." required />
+            </label>
+            <button type="submit">Register / Login</button>
+          </form>
+          <p id="profileStatus" class="status">Sign in to join or create a prata challenge.</p>
+        </aside>
+
+        <section class="panel">
+          <div class="section-heading">
+            <div>
+              <h2>Create Prata Session</h2>
+              <p>Host books the court and shares the invite link with another pair.</p>
+            </div>
+          </div>
+          <form id="sessionForm" class="session-grid">
+            <label>
+              Session title
+              <input id="sessionTitle" placeholder="Friday prata grudge match" required />
+            </label>
+            <label>
+              Date
+              <input id="sessionDate" type="date" required />
+            </label>
+            <label>
+              Time
+              <input id="sessionTime" type="time" required />
+            </label>
+            <label>
+              Court locality
+              <select id="sessionLocality" required>
+                <option value="Clementi">Clementi</option>
+                <option value="Bishan">Bishan</option>
+                <option value="Kallang">Kallang</option>
+                <option value="Tampines">Tampines</option>
+                <option value="Jurong West">Jurong West</option>
+                <option value="Queenstown">Queenstown</option>
+              </select>
+            </label>
+            <label class="wide">
+              Court details
+              <input id="courtDetails" placeholder="e.g. ActiveSG Kallang Tennis Centre, Court 3" required />
+            </label>
+            <label>
+              Cost, if any
+              <input id="sessionCost" placeholder="e.g. $12 court split" />
+            </label>
+            <label>
+              Host pair
+              <input id="hostPair" placeholder="Ketan / Aaron" required />
+            </label>
+            <label class="wide">
+              Notes
+              <textarea id="sessionNotes" placeholder="Format, ball duties, prata place, intensity level..."></textarea>
+            </label>
+            <button class="wide" type="submit">Create invite link</button>
+          </form>
+        </section>
+      </section>
+
+      <section class="content-grid">
+        <section class="panel">
+          <div class="section-heading">
+            <div>
+              <h2>Prata Sessions</h2>
+              <p>Join as a pair, record winners, and keep the rivalry honest.</p>
+            </div>
+          </div>
+          <div id="sessionsList" class="sessions-list"></div>
+        </section>
+
+        <aside class="panel">
+          <h2>Leaderboard</h2>
+          <div id="leaderboard" class="leaderboard"></div>
+        </aside>
+      </section>
+    </main>
+
+    <template id="sessionTemplate">
+      <article class="session-card">
+        <div class="session-topline">
+          <div>
+            <h3></h3>
+            <p class="session-meta"></p>
+          </div>
+          <span class="weather-pill">Checking weather...</span>
+        </div>
+        <p class="court"></p>
+        <p class="notes"></p>
+        <div class="pairs"></div>
+        <div class="card-actions">
+          <input class="challenger-input" placeholder="Joining pair, e.g. Mira / Sam" />
+          <button class="join-button">Join challenge</button>
+          <button class="copy-button">Copy invite</button>
+        </div>
+        <div class="winner-actions"></div>
+      </article>
+    </template>
+
+    <script src="app.js"></script>
+  </body>
+</html>

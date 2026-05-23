@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Join challenge{% endblock %}
+{% block content %}
+  <section class="layout invite-layout">
+    <article class="panel">
+      <p class="eyebrow">You have been challenged</p>
+      <h1>{{ session.title }}</h1>
+      <p class="lede">{{ session.host_side_name }} is looking for {% if session.is_singles %}a singles challenger{% else %}challengers{% endif %}.</p>
+      <dl class="details">
+        <div><dt>Type</dt><dd>{{ session.get_match_type_display }}</dd></div>
+        <div><dt>When</dt><dd>{{ session.starts_at|date:"D, j M, g:i A" }}</dd></div>
+        <div><dt>Court</dt><dd>{{ session.court_name }} {{ session.court_details }}</dd></div>
+        <div><dt>Level</dt><dd>{{ session.level_min }} to {{ session.level_max }}</dd></div>
+        <div><dt>Weather</dt><dd>{% include "play/weather_status.html" with session=session %}</dd></div>
+        <div><dt>Prata vibes</dt><dd>{{ session.prata_terms|default:"No prata stakes. Just tennis and pride." }}</dd></div>
+      </dl>
+    </article>
+    <aside class="panel">
+      {% if is_host %}
+        <h2>You are hosting</h2>
+        <p class="lede">Share this challenge with {% if session.is_singles %}another player{% else %}another confirmed pair{% endif %}, or manage the session from the session page.</p>
+        <div class="button-row">
+          <a class="button" href="{{ session.get_absolute_url }}">View session</a>
+          <a class="button secondary" href="{% url 'edit_session' session.pk %}">Edit session</a>
+        </div>
+      {% elif session.is_singles and session.challenger_player %}
+        <h2>Challenge filled</h2>
+        <p class="lede">{{ session.challenger_side_name }} has already joined this singles challenge.</p>
+        <a class="button" href="{{ session.get_absolute_url }}">View session</a>
+      {% elif session.is_doubles and session.challenger_pair %}
+        <h2>Challenge filled</h2>
+        <p class="lede">{{ session.challenger_pair }} has already joined this challenge.</p>
+        <a class="button" href="{{ session.get_absolute_url }}">View session</a>
+      {% elif session.is_singles %}
+        <h2>Accept singles challenge</h2>
+        <p class="lede">Join as the challenger player. No pair needed for singles prata.</p>
+        <form method="post" class="form-grid join-form">
+          {% csrf_token %}
+          <button type="submit">Accept singles challenge</button>
+        </form>
+      {% elif user_pairs %}
+        <h2>Choose your pair</h2>
+        <p class="lede">Prata challenges are pair vs pair. Pick one confirmed pair to join as the challenger side.</p>
+        <form method="post" class="form-grid join-form">
+          {% csrf_token %}
+          {% include "play/form_field.html" with field=form.saved_pair %}
+          <button type="submit">Join challenge</button>
+        </form>
+      {% else %}
+        <h2>Create a pair first</h2>
+        <p class="lede">You need a confirmed pair before you can accept a prata challenge. Create a pair and send your partner an invite, or accept a pair invite from someone else.</p>
+        <div class="button-row">
+          <a class="button" href="{% url 'create_pair' %}">Create pair</a>
+          <a class="button secondary" href="{% url 'profile' %}">View profile</a>
+        </div>
+      {% endif %}
+    </aside>
+  </section>
+{% endblock %}

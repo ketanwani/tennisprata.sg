@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}tennisprata.sg{% endblock %}
+{% block content %}
+  <section class="hero public-hero">
+    <div>
+      <p class="eyebrow">Singapore doubles tennis</p>
+      <h1>Challenge a pair. Prata optional.</h1>
+      <p>tennisprata.sg helps private tennis groups schedule doubles challenges, form pairs, match NTRP levels, coordinate match-day details, and keep a playful leaderboard. Prata stakes are encouraged, never compulsory.</p>
+      <div class="hero-actions">
+        <a class="button" href="{% url 'signup' %}">Create profile</a>
+        <a class="button secondary" href="{% url 'login' %}">Login</a>
+      </div>
+    </div>
+    <aside class="prata-showcase" aria-label="Animated prata illustration">
+      <div class="tennis-racket" aria-hidden="true"></div>
+      <div class="tennis-ball" aria-hidden="true"></div>
+      <div class="prata-pan">
+        <div class="prata">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+      <div class="prata-caption">
+        <strong>Win the match</strong>
+        <span>Or just earn bragging rights</span>
+      </div>
+    </aside>
+  </section>
+
+  <section class="feature-grid">
+    <article class="panel">
+      <p class="eyebrow">Pairing</p>
+      <h2>Join as a pair or solo</h2>
+      <p>Players can join with a regular pair, create an ad hoc pair, or enter the solo pool until another player pairs up.</p>
+    </article>
+    <article class="panel">
+      <p class="eyebrow">Levels</p>
+      <h2>Know the match level</h2>
+      <p>Profiles include self-rated NTRP levels, home courts, and match history so groups can make better doubles matchups.</p>
+    </article>
+    <article class="panel">
+      <p class="eyebrow">Coordination</p>
+      <h2>One thread per session</h2>
+      <p>Session chat keeps parking, balls, court directions, delays, weather calls, and prata plans in one place.</p>
+    </article>
+    <article class="panel">
+      <p class="eyebrow">Leaderboard</p>
+      <h2>Track pair bragging rights</h2>
+      <p>Record winners after each match and let the pair leaderboard show who is earning the most free prata.</p>
+    </article>
+  </section>
+{% endblock %}

@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Prata challenges{% endblock %}
+{% block content %}
+  <section class="dashboard-head">
+    <div>
+      <h1>Prata dashboard</h1>
+      <p>Manage upcoming singles and doubles challenges, pair invites, and match-day coordination. Prata is optional; bragging rights are inevitable.</p>
+    </div>
+    <div class="dashboard-actions">
+      <a class="button" href="{% url 'create_session' %}">Create challenge</a>
+      <a class="button secondary" href="{% url 'create_pair' %}">Create pair</a>
+    </div>
+    <div class="dashboard-stats">
+      <div class="dashboard-stat-card"><strong>{{ upcoming|length }}</strong><span>Upcoming</span></div>
+      <a class="dashboard-stat-card is-clickable" href="{% url 'profile' %}#pair-invites" aria-label="View pair invites">
+        <strong>{{ pair_invites_count }}</strong><span>Pair invites</span>
+      </a>
+      <a class="dashboard-stat-card is-clickable" href="{% url 'leaderboard' %}" aria-label="View pair leaderboard">
+        <strong>{{ leaderboard|length }}</strong><span>Ranked pairs</span>
+      </a>
+      <a class="dashboard-stat-card is-clickable" href="{% url 'leaderboard' %}" aria-label="View player leaderboard">
+        <strong>{{ singles_leaderboard_total }}</strong><span>Singles players</span>
+      </a>
+    </div>
+  </section>
+
+  <section class="layout">
+    <div class="panel">
+      <div class="section-title">
+        <h2>Upcoming prata sessions</h2>
+      </div>
+      <div class="session-list">
+        {% for session in upcoming %}
+          <article class="session-card">
+            <div class="session-main">
+              <div class="session-card-head">
+                <span class="status-pill">{{ session.get_status_display }}</span>
+                <span class="status-pill">{{ session.get_match_type_display }}</span>
+                <span class="session-date">{{ session.starts_at|date:"D, j M, g:i A" }}</span>
+              </div>
+              <h3><a href="{{ session.get_absolute_url }}">{{ session.title }}</a></h3>
+              <p class="session-location">{{ session.court_name }}</p>
+              <div class="match-line">
+                <strong>{{ session.host_side_name }}</strong>
+                <span>vs</span>
+                <strong>{{ session.challenger_side_name }}</strong>
+              </div>
+              {% include "play/weather_status.html" with session=session compact=True %}
+            </div>
+            <span class="session-actions">
+              <a class="icon-button" href="{{ session.get_absolute_url }}" aria-label="View session details" title="View session details">
+                <svg aria-hidden="true" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </a>
+              {% if session.host == user or user.is_staff %}
+                <a class="icon-button" href="{% url 'edit_session' session.id %}" aria-label="Edit session" title="Edit session">
+                  <svg aria-hidden="true" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
+                  </svg>
+                </a>
+              {% endif %}
+            </span>
+          </article>
+        {% empty %}
+          <p class="empty">No upcoming sessions yet. Start the first prata challenge.</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <aside class="panel dashboard-side-panel">
+      <h2>Leaderboard</h2>
+      <p class="lede">Pair and player rankings now live on a dedicated page, ready for larger groups and longer lists.</p>
+      <a class="button" href="{% url 'leaderboard' %}">View leaderboard</a>
+    </aside>
+  </section>
+{% endblock %}
