@@ -1,0 +1,13 @@
+services:
+  web:
+    command: gunicorn tennisprata.wsgi:application --bind 0.0.0.0:8000 --workers 2 --timeout 60
+    env_file:
+      - .env
+
+  celery:
+    env_file:
+      - .env
+
+  celery-beat:
+    env_file:
+      - .env

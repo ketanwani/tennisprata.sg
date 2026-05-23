@@ -63,6 +63,84 @@ For a real deployment, replace the console reminder stubs with providers:
 
 The app is already Postgres-backed in Docker. Set production `SECRET_KEY`, `DEBUG=0`, `ALLOWED_HOSTS`, provider credentials, and run behind HTTPS.
 
+## DigitalOcean Deployment With Nginx
+
+The production stack uses Docker for Django/Postgres/Redis/Celery and host-level Nginx with Certbot for HTTPS.
+
+On the Droplet, clone the repository to:
+
+```bash
+/opt/tennisprata.sg
+```
+
+Create `/opt/tennisprata.sg/.env`:
+
+```env
+DEBUG=0
+SECRET_KEY=replace-with-a-long-random-secret
+ALLOWED_HOSTS=tennisprata.live,www.tennisprata.live,165.245.188.29,localhost,127.0.0.1
+CSRF_TRUSTED_ORIGINS=https://tennisprata.live,https://www.tennisprata.live
+SESSION_COOKIE_SECURE=1
+CSRF_COOKIE_SECURE=1
+DATABASE_URL=postgres://tennisprata:tennisprata@db:5432/tennisprata
+CELERY_BROKER_URL=redis://redis:6379/0
+CELERY_RESULT_BACKEND=redis://redis:6379/1
+DJANGO_CACHE_URL=redis://redis:6379/2
+DEFAULT_FROM_EMAIL=hello@tennisprata.live
+EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
+SMS_PROVIDER=console
+WHATSAPP_PROVIDER=console
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+```
+
+Run the production Docker stack:
+
+```bash
+cd /opt/tennisprata.sg
+docker compose -f docker-compose.yml -f docker-compose.prod.yml build
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T web python manage.py migrate
+docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T web python manage.py collectstatic --noinput
+```
+
+Install Nginx and Certbot on the Droplet:
+
+```bash
+sudo apt update
+sudo apt install -y nginx certbot python3-certbot-nginx
+```
+
+Copy the Nginx config:
+
+```bash
+sudo cp /opt/tennisprata.sg/deploy/nginx/tennisprata.live.conf /etc/nginx/sites-available/tennisprata.live
+sudo ln -s /etc/nginx/sites-available/tennisprata.live /etc/nginx/sites-enabled/tennisprata.live
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+Issue the HTTPS certificate:
+
+```bash
+sudo certbot --nginx -d tennisprata.live -d www.tennisprata.live
+```
+
+Allow web traffic if UFW is enabled:
+
+```bash
+sudo ufw allow 80
+sudo ufw allow 443
+```
+
+After DNS points `tennisprata.live` and `www.tennisprata.live` to the Droplet IP, the site should be available at:
+
+```text
+https://tennisprata.live
+```
+
+The GitHub Actions workflow in `.github/workflows/deploy.yml` deploys with the same production compose command. It expects the repo to exist at `/opt/tennisprata.sg` and the production `.env` file to stay on the Droplet.
+
 ## Google Login Setup
 
 The code is wired for Google OAuth using django-allauth. To activate it:
