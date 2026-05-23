@@ -25,7 +25,7 @@ jobs:
           port: ${{ secrets.DROPLET_PORT || 22 }}
           script: |
             set -e
-            cd /opt/tennisprata.sg
+            cd /root/tennisprata.sg
             git pull --ff-only origin main
             docker compose -f docker-compose.yml -f docker-compose.prod.yml build
             docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d

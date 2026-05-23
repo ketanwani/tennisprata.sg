@@ -70,10 +70,10 @@ The production stack uses Docker for Django/Postgres/Redis/Celery and host-level
 On the Droplet, clone the repository to:
 
 ```bash
-/opt/tennisprata.sg
+/root/tennisprata.sg
 ```
 
-Create `/opt/tennisprata.sg/.env`:
+Create `/root/tennisprata.sg/.env`:
 
 ```env
 DEBUG=0
@@ -97,7 +97,7 @@ GOOGLE_CLIENT_SECRET=
 Run the production Docker stack:
 
 ```bash
-cd /opt/tennisprata.sg
+cd /root/tennisprata.sg
 docker compose -f docker-compose.yml -f docker-compose.prod.yml build
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T web python manage.py migrate
@@ -114,7 +114,7 @@ sudo apt install -y nginx certbot python3-certbot-nginx
 Copy the Nginx config:
 
 ```bash
-sudo cp /opt/tennisprata.sg/deploy/nginx/tennisprata.live.conf /etc/nginx/sites-available/tennisprata.live
+sudo cp /root/tennisprata.sg/deploy/nginx/tennisprata.live.conf /etc/nginx/sites-available/tennisprata.live
 sudo ln -s /etc/nginx/sites-available/tennisprata.live /etc/nginx/sites-enabled/tennisprata.live
 sudo nginx -t
 sudo systemctl reload nginx
@@ -139,7 +139,7 @@ After DNS points `tennisprata.live` and `www.tennisprata.live` to the Droplet IP
 https://tennisprata.live
 ```
 
-The GitHub Actions workflow in `.github/workflows/deploy.yml` deploys with the same production compose command. It expects the repo to exist at `/opt/tennisprata.sg` and the production `.env` file to stay on the Droplet.
+The GitHub Actions workflow in `.github/workflows/deploy.yml` deploys with the same production compose command. It expects the repo to exist at `/root/tennisprata.sg` and the production `.env` file to stay on the Droplet.
 
 ## Google Login Setup
 
