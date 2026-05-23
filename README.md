@@ -99,6 +99,7 @@ Run the production Docker stack:
 
 ```bash
 cd /root/tennisprata.sg
+docker network create public-web || true
 docker compose -f docker-compose.yml -f docker-compose.prod.yml build
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T web python manage.py migrate

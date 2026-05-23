@@ -28,6 +28,7 @@ jobs:
             cd /root/tennisprata.sg
             git diff --quiet -- docker-compose.yml || git stash push -m "pre-deploy docker-compose local edit" -- docker-compose.yml
             git pull --ff-only origin main
+            docker network create public-web || true
             docker compose -f docker-compose.yml -f docker-compose.prod.yml build
             docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans
             docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T web python manage.py migrate
