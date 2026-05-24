@@ -8,7 +8,7 @@
     <p class="lede">Use email, phone number, or both. Only one contact method is needed to create your profile.</p>
     <p class="setup-note">Already have an account? <a href="{% url 'login' %}">Login instead</a>.</p>
     {% if google_oauth_enabled %}
-      <a class="button google-button" href="{% provider_login_url 'google' process='login' %}">Continue with Google</a>
+      <a class="button google-button" href="{% provider_login_url 'google' process='signup' %}">Sign up with Google</a>
     {% else %}
       <button class="button google-button disabled" type="button" disabled>Google signup pending setup</button>
       <p class="setup-note">Add Google OAuth credentials in Django admin to enable this button.</p>

@@ -32,5 +32,6 @@ jobs:
             docker compose -f docker-compose.yml -f docker-compose.prod.yml build
             docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans
             docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T web python manage.py migrate
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T web python manage.py configure_google_oauth --domain tennisprata.live --skip-if-missing
             docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T web python manage.py collectstatic --noinput
             docker compose -f docker-compose.yml -f docker-compose.prod.yml ps

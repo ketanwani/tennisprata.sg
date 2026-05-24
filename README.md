@@ -93,6 +93,7 @@ SMS_PROVIDER=console
 WHATSAPP_PROVIDER=console
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
+SITE_DOMAIN=tennisprata.live
 ```
 
 Run the production Docker stack:
@@ -165,8 +166,18 @@ The command creates/updates the Django Site and Google SocialApp records.
 For production, add the production callback URL too:
 
 ```text
-https://tennisprata.sg/accounts/google/login/callback/
+https://tennisprata.live/accounts/google/login/callback/
 ```
+
+Set these in `/root/tennisprata.sg/.env` on the Droplet:
+
+```env
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+SITE_DOMAIN=tennisprata.live
+```
+
+GitHub Actions runs `configure_google_oauth` during deployment. If the Google credentials are blank, deployment continues and the Google buttons remain disabled.
 
 ## Court Location Search
 
