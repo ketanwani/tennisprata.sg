@@ -12,6 +12,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from collections import Counter
 import json
+import os
 import math
 import secrets
 import urllib.parse
@@ -594,10 +595,17 @@ def location_search(request):
 def search_onemap(query):
     params = urllib.parse.urlencode({"searchVal": query, "returnGeom": "Y", "getAddrDetails": "Y", "pageNum": 1})
     url = f"https://www.onemap.gov.sg/api/common/elastic/search?{params}"
+    headers = {}
+    token = os.getenv("ONEMAP_API_TOKEN", "").strip()
+    if token:
+        headers["Authorization"] = token
     try:
-        with urllib.request.urlopen(url, timeout=4) as response:
+        request = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(request, timeout=4) as response:
             payload = json.loads(response.read().decode("utf-8"))
     except Exception:
+        return []
+    if payload.get("error"):
         return []
 
     results = []
