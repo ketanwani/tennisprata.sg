@@ -27,6 +27,7 @@
           <a href="{% url 'leaderboard' %}">Leaderboard</a>
           <a href="{% url 'notification_preferences' %}">Notifications</a>
           <a href="{% url 'profile' %}">Profile</a>
+          <a href="https://docs.google.com/forms/d/e/1FAIpQLSdzEGEe3xXzdGpZAnYY-Xf0MWQcbxKIKQoCIlfl2iXBVlN93Q/viewform?usp=publish-editor" target="_blank" rel="noreferrer">Feedback</a>
           {% if user.is_staff %}
             <a href="{% url 'moderation_dashboard' %}">Moderation</a>
           {% endif %}
