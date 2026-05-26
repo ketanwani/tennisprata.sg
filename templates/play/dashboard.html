@@ -4,7 +4,7 @@
   <section class="dashboard-head">
     <div>
       <h1>Prata dashboard</h1>
-      <p>Manage upcoming singles and doubles challenges, pair invites, and match-day coordination. Prata is optional; bragging rights are inevitable.</p>
+      <p>Manage your joined and hosted challenges, pair invites, and match-day coordination. Prata is optional; bragging rights are inevitable.</p>
     </div>
     <div class="dashboard-actions">
       <a class="button" href="{% url 'create_session' %}">Create challenge</a>
@@ -64,7 +64,7 @@
             </span>
           </article>
         {% empty %}
-          <p class="empty">No upcoming sessions yet. Start the first prata challenge.</p>
+          <p class="empty">No upcoming sessions on your card yet. Join a challenge from an invite or start one of your own.</p>
         {% endfor %}
       </div>
     </div>

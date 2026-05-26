@@ -282,6 +282,10 @@ def player_match_stats(user, group=None):
     }
 
 
+def leaderboard_points(wins, losses):
+    return wins * 3 + losses
+
+
 def build_player_leaderboard(group):
     ranked = []
     users = User.objects.filter(play_groups=group, is_active=True).select_related("profile").distinct()
@@ -296,7 +300,7 @@ def build_player_leaderboard(group):
                     "name": player_name(user),
                     "wins": wins,
                     "losses": losses,
-                    "points": wins * 3,
+                    "points": leaderboard_points(wins, losses),
                     "singles": f'{stats["singles_wins"]}W {stats["singles_losses"]}L',
                     "doubles": f'{stats["doubles_wins"]}W {stats["doubles_losses"]}L',
                 }
@@ -318,10 +322,21 @@ def build_singles_leaderboard(group):
                     "name": player_name(user),
                     "wins": wins,
                     "losses": losses,
-                    "points": wins * 3,
+                    "points": leaderboard_points(wins, losses),
                 }
             )
     return sorted(ranked, key=lambda item: (item["points"], item["wins"], item["name"].lower()), reverse=True)
+
+
+def build_pair_leaderboard(group):
+    ranked = []
+    pairs = group.pairs.filter(status=Pair.Status.CONFIRMED).prefetch_related("players")
+    for pair in pairs:
+        wins = pair.wins
+        losses = pair.losses
+        if wins or losses:
+            ranked.append(pair)
+    return sorted(ranked, key=lambda pair: (pair.points, pair.wins, pair.name.lower()), reverse=True)
 
 
 def testimonial_summary(user):
@@ -434,14 +449,8 @@ def dashboard(request):
         return render(request, "play/landing.html")
 
     group = ensure_demo_group(request.user)
-    upcoming = group.sessions.select_related("host", "host_pair", "challenger_pair", "challenger_player").filter(
-        starts_at__gte=timezone.now()
-    )[:8]
-    leaderboard = sorted(
-        group.pairs.filter(status=Pair.Status.CONFIRMED),
-        key=lambda pair: pair.points,
-        reverse=True,
-    )
+    upcoming = sessions_for_user(request.user).filter(starts_at__gte=timezone.now()).order_by("starts_at")[:8]
+    leaderboard = build_pair_leaderboard(group)
     singles_leaderboard = build_singles_leaderboard(group)
     pair_invites = pending_pair_invites_for(request.user)
     return render(
@@ -461,11 +470,7 @@ def dashboard(request):
 @login_required
 def leaderboard(request):
     group = ensure_demo_group(request.user)
-    pair_leaderboard = sorted(
-        group.pairs.filter(status=Pair.Status.CONFIRMED),
-        key=lambda pair: pair.points,
-        reverse=True,
-    )
+    pair_leaderboard = build_pair_leaderboard(group)
     singles_leaderboard = build_singles_leaderboard(group)
     return render(
         request,

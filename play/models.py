@@ -117,7 +117,7 @@ class Pair(models.Model):
 
     @property
     def points(self):
-        return self.wins * 3
+        return self.wins * 3 + self.losses
 
     @property
     def needs_partner(self):
