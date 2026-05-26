@@ -39,14 +39,6 @@
             {% include "play/form_field.html" with field=form.avatar_url %}
           </details>
         </div>
-        <div class="form-section">
-          <h2>Reminders</h2>
-          <div class="toggle-list">
-            {% include "play/form_field.html" with field=form.reminders_by_email %}
-            {% include "play/form_field.html" with field=form.reminders_by_sms %}
-            {% include "play/form_field.html" with field=form.reminders_by_whatsapp %}
-          </div>
-        </div>
         <button type="submit">Update profile</button>
       </form>
     </article>
@@ -73,6 +65,9 @@
           {% endfor %}
         </div>
       {% endif %}
+      <h2>Notification preferences</h2>
+      <p class="empty">Choose email, SMS, WhatsApp, and calendar reminder settings from the notification center.</p>
+      <a class="button secondary" href="{% url 'notification_preferences' %}">Manage notifications</a>
       <h2 id="pair-invites">Pair invites</h2>
       <div class="pair-list">
         {% for invite in pair_invites %}

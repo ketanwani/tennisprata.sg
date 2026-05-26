@@ -1154,6 +1154,102 @@ nav a,
   color: var(--muted);
 }
 
+.notification-channel-grid,
+.contact-readiness,
+.delivery-list {
+  display: grid;
+  gap: 12px;
+}
+
+.notification-channel-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.notification-channel {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  min-height: 116px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: white;
+  padding: 16px;
+  cursor: pointer;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease, background 160ms ease;
+}
+
+.notification-channel:hover,
+.notification-channel:has(input:checked) {
+  border-color: rgba(10, 194, 204, 0.45);
+  background: #f1fffd;
+  box-shadow: 0 14px 30px rgba(10, 194, 204, 0.1);
+  transform: translateY(-1px);
+}
+
+.notification-channel:has(input:disabled) {
+  background: #f6f8fb;
+  cursor: not-allowed;
+  opacity: 0.74;
+}
+
+.notification-channel:has(input:disabled):hover {
+  border-color: var(--line);
+  box-shadow: none;
+  transform: none;
+}
+
+.notification-channel input {
+  width: 20px;
+  height: 20px;
+  margin: 2px 0 0;
+  accent-color: var(--court);
+}
+
+.notification-channel strong,
+.notification-channel small {
+  display: block;
+}
+
+.notification-channel em {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  margin-left: 6px;
+  border-radius: 999px;
+  background: #eef2f7;
+  color: var(--muted);
+  padding: 0 8px;
+  font-size: 0.72rem;
+  font-style: normal;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.notification-channel small,
+.contact-readiness span {
+  margin-top: 5px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.contact-readiness {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.contact-readiness div {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: #fbfcff;
+  padding: 14px;
+}
+
+.contact-readiness strong,
+.contact-readiness span {
+  display: block;
+}
+
 .session-card h3 {
   margin: 0 0 8px;
   font-size: 1.12rem;
@@ -2161,6 +2257,8 @@ textarea {
   .feature-grid,
   .leaderboard-grid,
   .session-workflow-grid,
+  .notification-channel-grid,
+  .contact-readiness,
   .moderation-grid,
   .details,
   .versus,

@@ -42,7 +42,7 @@ http://localhost:8000/admin/
 - Google login/signup wiring via django-allauth
 - Singapore court search by name or postal code using OneMap
 - Redis-backed caching for OneMap search results
-- Editable user profile with avatar URL, home courts, reminders, match history
+- Editable user profile with avatar URL, home courts, and match history
 - Group-scoped prata sessions
 - Reusable pairs and ad hoc pair names
 - Join invite as solo, new pair, or existing pair
@@ -50,17 +50,17 @@ http://localhost:8000/admin/
 - Session chat for parking, balls, exact court, delays, and prata planning
 - Pair leaderboard from recorded wins
 - Staff moderation dashboard for cancelling sessions, disabling users, and blocking emails/phone numbers
-- Celery scheduled reminder scan for sessions starting in about 24 hours
-- Console email/SMS/WhatsApp stubs plus calendar reminder log placeholder
+- Notification preferences for email reminders and calendar invites
+- Celery scheduled email reminder scan for sessions starting in about 24 hours
+- SMS and WhatsApp are shown as upcoming disabled channels
 
 ## Production Notes
 
-For a real deployment, replace the console reminder stubs with providers:
+For real email delivery, configure an SMTP or transactional email backend:
 
 - Email: SES, Postmark, SendGrid, or SMTP
-- SMS: Twilio, Vonage, or local Singapore SMS provider
-- WhatsApp: WhatsApp Business Cloud API or Twilio WhatsApp
-- Calendar invite: generate and attach `.ics` files to reminder emails
+- Calendar invite: `.ics` files are attached to reminder emails when users enable calendar invites
+- SMS and WhatsApp are intentionally disabled in the first version
 
 The app is already Postgres-backed in Docker. Set production `SECRET_KEY`, `DEBUG=0`, `ALLOWED_HOSTS`, provider credentials, and run behind HTTPS.
 
@@ -88,9 +88,14 @@ CELERY_BROKER_URL=redis://redis:6379/0
 CELERY_RESULT_BACKEND=redis://redis:6379/1
 DJANGO_CACHE_URL=redis://redis:6379/2
 DEFAULT_FROM_EMAIL=hello@tennisprata.live
-EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
-SMS_PROVIDER=console
-WHATSAPP_PROVIDER=console
+APP_BASE_URL=https://tennisprata.live
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp.example.com
+EMAIL_PORT=587
+EMAIL_HOST_USER=your-smtp-user
+EMAIL_HOST_PASSWORD=your-smtp-password
+EMAIL_USE_TLS=1
+EMAIL_USE_SSL=0
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 SITE_DOMAIN=tennisprata.live

@@ -1,9 +1,9 @@
-from django.core.mail import send_mail
 from django.utils import timezone
 
 from tennisprata.celery import app
 
-from .models import PrataSession, Profile, ReminderLog
+from .models import PrataSession
+from .notifications import NotificationPayload, notify_user
 
 
 @app.task
@@ -31,37 +31,23 @@ def send_session_reminder(session_id, user_id):
     User = get_user_model()
     session = PrataSession.objects.get(pk=session_id)
     user = User.objects.select_related("profile").get(pk=user_id)
-    profile, _ = Profile.objects.get_or_create(user=user)
+    starts_at = timezone.localtime(session.starts_at)
     subject = f"Reminder: {session.title} starts tomorrow"
     body = (
         f"{session.title}\n"
-        f"When: {session.starts_at:%a, %d %b %Y, %I:%M %p}\n"
+        f"When: {starts_at:%a, %d %b %Y, %I:%M %p} SGT\n"
         f"Where: {session.court_name} {session.court_details}\n"
         f"Weather: {session.weather_risk} - {session.weather_summary}\n"
         f"Prata vibes: {session.prata_terms or 'No prata stakes. Just tennis and pride.'}\n"
     )
-
-    if profile.reminders_by_email and user.email:
-        send_mail(subject, body, None, [user.email], fail_silently=True)
-        ReminderLog.objects.create(session=session, user=user, channel=ReminderLog.Channel.EMAIL, destination=user.email)
-
-    if profile.reminders_by_sms and profile.phone:
-        send_console_provider_message("sms", profile.phone, body)
-        ReminderLog.objects.create(session=session, user=user, channel=ReminderLog.Channel.SMS, destination=profile.phone)
-
-    if profile.reminders_by_whatsapp and profile.phone:
-        send_console_provider_message("whatsapp", profile.phone, body)
-        ReminderLog.objects.create(session=session, user=user, channel=ReminderLog.Channel.WHATSAPP, destination=profile.phone)
-
-    ReminderLog.objects.create(
-        session=session,
-        user=user,
-        channel=ReminderLog.Channel.CALENDAR,
-        destination=user.email or profile.phone,
-        provider_message_id="calendar-ics-placeholder",
+    notify_user(
+        user,
+        NotificationPayload(
+            title=subject,
+            body=body,
+            url=session.get_absolute_url(),
+            session=session,
+            include_calendar=True,
+        ),
     )
     return 1
-
-
-def send_console_provider_message(channel, destination, body):
-    print(f"[{channel.upper()} reminder to {destination}]\n{body}")

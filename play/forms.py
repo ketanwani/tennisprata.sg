@@ -186,17 +186,11 @@ class ProfileForm(forms.ModelForm):
             "ntrp_level",
             "home_courts",
             "bio",
-            "reminders_by_email",
-            "reminders_by_sms",
-            "reminders_by_whatsapp",
         )
         labels = {
             "ntrp_level": "NTRP level",
             "home_courts": "Home courts",
             "avatar_url": "Image URL",
-            "reminders_by_email": "Email reminders",
-            "reminders_by_sms": "SMS reminders",
-            "reminders_by_whatsapp": "WhatsApp reminders",
         }
 
     def __init__(self, *args, **kwargs):
@@ -214,6 +208,55 @@ class ProfileForm(forms.ModelForm):
         profile.user.email = self.cleaned_data.get("email", "")
         if commit:
             profile.user.save()
+            profile.save()
+        return profile
+
+
+class NotificationPreferencesForm(forms.ModelForm):
+    class Meta:
+        model = Profile
+        fields = (
+            "reminders_by_email",
+            "reminders_by_sms",
+            "reminders_by_whatsapp",
+            "reminders_by_calendar",
+        )
+        labels = {
+            "reminders_by_email": "Email",
+            "reminders_by_sms": "SMS",
+            "reminders_by_whatsapp": "WhatsApp",
+            "reminders_by_calendar": "Calendar invite",
+        }
+        help_texts = {
+            "reminders_by_email": "Session reminders and important challenge updates.",
+            "reminders_by_sms": "Upcoming feature. SMS delivery is not enabled yet.",
+            "reminders_by_whatsapp": "Upcoming feature. WhatsApp delivery is not enabled yet.",
+            "reminders_by_calendar": "Attach a calendar invite to email reminders.",
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name in ("reminders_by_sms", "reminders_by_whatsapp"):
+            self.fields[field_name].disabled = True
+            self.fields[field_name].initial = False
+            self.fields[field_name].widget.attrs.update({"disabled": "disabled"})
+
+    def clean(self):
+        cleaned = super().clean()
+        email = (self.instance.user.email or "").strip()
+        cleaned["reminders_by_sms"] = False
+        cleaned["reminders_by_whatsapp"] = False
+        if cleaned.get("reminders_by_email") and not email:
+            self.add_error("reminders_by_email", "Add an email address on your profile to use email reminders.")
+        if cleaned.get("reminders_by_calendar") and not email:
+            self.add_error("reminders_by_calendar", "Add an email address on your profile to receive calendar invites.")
+        return cleaned
+
+    def save(self, commit=True):
+        profile = super().save(commit=False)
+        profile.reminders_by_sms = False
+        profile.reminders_by_whatsapp = False
+        if commit:
             profile.save()
         return profile
 

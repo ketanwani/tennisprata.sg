@@ -41,6 +41,7 @@ class Profile(models.Model):
     reminders_by_email = models.BooleanField(default=True)
     reminders_by_sms = models.BooleanField(default=False)
     reminders_by_whatsapp = models.BooleanField(default=False)
+    reminders_by_calendar = models.BooleanField(default=True)
 
     def __str__(self):
         return self.user.get_full_name() or self.user.username

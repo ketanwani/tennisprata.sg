@@ -25,6 +25,7 @@ from .forms import (
     DisableUserForm,
     JoinSessionForm,
     MatchScoreForm,
+    NotificationPreferencesForm,
     PairInviteForm,
     PairForm,
     PrataSessionForm,
@@ -44,11 +45,13 @@ from .models import (
     PlayGroup,
     PrataSession,
     Profile,
+    ReminderLog,
     SessionParticipant,
     TESTIMONIAL_BADGE_CHOICES,
     Testimonial,
     normalize_identity,
 )
+from .notifications import NotificationPayload, notify_user
 from .weather import weather_risk_for
 
 
@@ -182,6 +185,35 @@ def session_match_sides(session):
             "is_open": not session_has_challenger(session),
         },
     ]
+
+
+def notify_host_side_session_joined(session, joined_name, actor=None):
+    recipients = []
+
+    def add_recipient(user):
+        if user and user != actor and all(existing.pk != user.pk for existing in recipients):
+            recipients.append(user)
+
+    add_recipient(session.host)
+    if session.host_pair_id:
+        for player in session.host_pair.players.all():
+            add_recipient(player)
+
+    starts_at = timezone.localtime(session.starts_at)
+    for user in recipients:
+        notify_user(
+            user,
+            NotificationPayload(
+                title=f"{joined_name} joined your prata challenge",
+                body=(
+                    f"{joined_name} joined {session.title}.\n"
+                    f"When: {starts_at:%a, %d %b %Y, %I:%M %p} SGT\n"
+                    f"Where: {session.court_name}"
+                ),
+                url=session.get_absolute_url(),
+                session=session,
+            ),
+        )
 
 
 def apply_score_result(session, user, form):
@@ -751,6 +783,56 @@ def profile(request):
 
 
 @login_required
+def notification_preferences(request):
+    profile_obj, _ = Profile.objects.get_or_create(user=request.user)
+    if request.method == "POST":
+        action = request.POST.get("action", "save")
+        form = NotificationPreferencesForm(request.POST, instance=profile_obj)
+        if form.is_valid():
+            form.save()
+            if action == "test_email":
+                try:
+                    sent = notify_user(
+                        request.user,
+                        NotificationPayload(
+                            title="Test email from tennisprata.sg",
+                            body=(
+                                "This is a test email from tennisprata.sg.\n\n"
+                                "If you received this, email notifications are ready."
+                            ),
+                            url="/notifications/preferences/",
+                        ),
+                        channels=["email"],
+                        raise_on_delivery_error=True,
+                    )
+                except Exception as exc:
+                    messages.error(request, f"Test email could not be sent: {exc}")
+                    return redirect("notification_preferences")
+                if sent:
+                    messages.success(request, "Test email sent.")
+                else:
+                    messages.error(request, "Add an email address on your profile before sending a test email.")
+            else:
+                messages.success(request, "Notification preferences updated.")
+            return redirect("notification_preferences")
+        add_form_error_messages(request, form, "Notification preferences could not be updated.")
+    else:
+        form = NotificationPreferencesForm(instance=profile_obj)
+    deliveries = ReminderLog.objects.filter(user=request.user).select_related("session")[:12]
+    notifications = Notification.objects.filter(user=request.user)[:12]
+    return render(
+        request,
+        "play/notification_preferences.html",
+        {
+            "form": form,
+            "profile_obj": profile_obj,
+            "deliveries": deliveries,
+            "notifications": notifications,
+        },
+    )
+
+
+@login_required
 def create_pair(request):
     group = ensure_demo_group(request.user)
     if request.method == "POST":
@@ -1037,6 +1119,11 @@ def join_invite(request, invite_code):
                 is_system=True,
                 body=f"{request.user.get_full_name() or request.user.username} joined as the challenger.",
             )
+            notify_host_side_session_joined(
+                session,
+                request.user.get_full_name() or request.user.username,
+                actor=request.user,
+            )
             return redirect("session_invite_accepted", pk=session.pk)
         form = JoinSessionForm(request.POST, group=session.group, user=request.user)
         if session.challenger_pair:
@@ -1057,6 +1144,7 @@ def join_invite(request, invite_code):
             session.status = PrataSession.Status.CONFIRMED
             session.save(update_fields=["challenger_pair", "status"])
             ChatMessage.objects.create(session=session, is_system=True, body=f"{pair} joined as the challenger pair.")
+            notify_host_side_session_joined(session, str(pair), actor=request.user)
             return redirect("session_invite_accepted", pk=session.pk)
         add_form_error_messages(request, form, "Could not join the challenge.")
     else:

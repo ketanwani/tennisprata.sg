@@ -25,6 +25,7 @@
           <a href="{% url 'my_sessions' %}">My sessions</a>
           <a href="{% url 'create_session' %}">Create</a>
           <a href="{% url 'leaderboard' %}">Leaderboard</a>
+          <a href="{% url 'notification_preferences' %}">Notifications</a>
           <a href="{% url 'profile' %}">Profile</a>
           {% if user.is_staff %}
             <a href="{% url 'moderation_dashboard' %}">Moderation</a>
@@ -46,7 +47,7 @@
         {% for message in messages %}
           <div class="toast toast-{{ message.tags|default:'info' }}">
             <strong>
-              {% if "error" in message.tags %}Could not save{% elif "success" in message.tags %}Saved{% else %}Notice{% endif %}
+              {% if "oauth" in message.tags %}Could not sign in{% elif "error" in message.tags %}Could not save{% elif "success" in message.tags %}Saved{% else %}Notice{% endif %}
             </strong>
             <span>{{ message }}</span>
           </div>

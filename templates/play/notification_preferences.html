@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Notifications{% endblock %}
+{% block content %}
+  <section class="layout">
+    <article class="panel">
+      <div class="section-title">
+        <div>
+          <p class="eyebrow">Notification center</p>
+          <h1>Reminders that fit your rally rhythm</h1>
+          <p class="lede">Choose how tennisprata.sg should reach you before sessions and when challenge updates happen.</p>
+        </div>
+      </div>
+      <form method="post" class="form-grid notification-preferences-form">
+        {% csrf_token %}
+        <div class="notification-channel-grid">
+          <label class="notification-channel">
+            {{ form.reminders_by_email }}
+            <span>
+              <strong>Email</strong>
+              <small>{{ form.reminders_by_email.help_text }}</small>
+            </span>
+          </label>
+          <label class="notification-channel">
+            {{ form.reminders_by_sms }}
+            <span>
+              <strong>SMS <em>Upcoming</em></strong>
+              <small>{{ form.reminders_by_sms.help_text }}</small>
+            </span>
+          </label>
+          <label class="notification-channel">
+            {{ form.reminders_by_whatsapp }}
+            <span>
+              <strong>WhatsApp <em>Upcoming</em></strong>
+              <small>{{ form.reminders_by_whatsapp.help_text }}</small>
+            </span>
+          </label>
+          <label class="notification-channel">
+            {{ form.reminders_by_calendar }}
+            <span>
+              <strong>Calendar invite</strong>
+              <small>{{ form.reminders_by_calendar.help_text }}</small>
+            </span>
+          </label>
+        </div>
+        {% if form.non_field_errors %}
+          <div class="form-errors">{{ form.non_field_errors }}</div>
+        {% endif %}
+        {% for field in form %}
+          {% for error in field.errors %}
+            <p class="error">{{ field.label }}: {{ error }}</p>
+          {% endfor %}
+        {% endfor %}
+        <div class="contact-readiness">
+          <div>
+            <strong>Email</strong>
+            <span>{{ user.email|default:"Add an email on your profile" }}</span>
+          </div>
+          <div>
+            <strong>Phone</strong>
+            <span>{{ profile_obj.phone|default:"Add a phone number on your profile" }}</span>
+          </div>
+        </div>
+        <div class="button-row">
+          <button type="submit" name="action" value="save">Save preferences</button>
+          <button class="secondary" type="submit" name="action" value="test_email">Send test email</button>
+          <a class="button secondary" href="{% url 'profile' %}">Edit profile contact</a>
+        </div>
+      </form>
+    </article>
+    <aside class="panel">
+      <h2>Recent app notifications</h2>
+      <div class="notification-list">
+        {% for notification in notifications %}
+          <a class="notification-card" href="{{ notification.url|default:'#' }}">
+            <strong>{{ notification.title }}</strong>
+            <span>{{ notification.body }}</span>
+            <small>{{ notification.created_at|timesince }} ago</small>
+          </a>
+        {% empty %}
+          <p class="empty">Challenge updates and reminders will appear here.</p>
+        {% endfor %}
+      </div>
+      <h2>Delivery log</h2>
+      <div class="delivery-list">
+        {% for delivery in deliveries %}
+          <div class="history-row">
+            <span>
+              <strong>{{ delivery.get_channel_display }}</strong>
+              <small>{{ delivery.session.title }} - {{ delivery.destination }}</small>
+              <small>{{ delivery.sent_at|timesince }} ago</small>
+            </span>
+          </div>
+        {% empty %}
+          <p class="empty">No reminder deliveries yet.</p>
+        {% endfor %}
+      </div>
+    </aside>
+  </section>
+{% endblock %}

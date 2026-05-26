@@ -8,6 +8,7 @@ urlpatterns = [
     path("login/", views.TennisPrataLoginView.as_view(), name="login"),
     path("logout/", views.TennisPrataLogoutView.as_view(), name="logout"),
     path("profile/", views.profile, name="profile"),
+    path("notifications/preferences/", views.notification_preferences, name="notification_preferences"),
     path("leaderboard/", views.leaderboard, name="leaderboard"),
     path("my-sessions/", views.my_sessions, name="my_sessions"),
     path("pairs/new/", views.create_pair, name="create_pair"),
