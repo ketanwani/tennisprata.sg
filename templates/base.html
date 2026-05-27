@@ -25,16 +25,21 @@
           <a href="{% url 'my_sessions' %}">My sessions</a>
           <a href="{% url 'create_session' %}">Create</a>
           <a href="{% url 'leaderboard' %}">Leaderboard</a>
-          <a href="{% url 'notification_preferences' %}">Notifications</a>
-          <a href="{% url 'profile' %}">Profile</a>
-          <a href="https://docs.google.com/forms/d/e/1FAIpQLSdzEGEe3xXzdGpZAnYY-Xf0MWQcbxKIKQoCIlfl2iXBVlN93Q/viewform?usp=publish-editor" target="_blank" rel="noreferrer">Feedback</a>
-          {% if user.is_staff %}
-            <a href="{% url 'moderation_dashboard' %}">Moderation</a>
-          {% endif %}
-          <form method="post" action="{% url 'logout' %}">
-            {% csrf_token %}
-            <button class="link-button" type="submit">Logout</button>
-          </form>
+          <details class="nav-more">
+            <summary>More</summary>
+            <div class="nav-more-menu">
+              <a href="{% url 'notification_preferences' %}">Notifications</a>
+              <a href="{% url 'profile' %}">Profile</a>
+              <a href="https://docs.google.com/forms/d/e/1FAIpQLSdzEGEe3xXzdGpZAnYY-Xf0MWQcbxKIKQoCIlfl2iXBVlN93Q/viewform?usp=publish-editor" target="_blank" rel="noreferrer">Feedback</a>
+              {% if user.is_staff %}
+                <a href="{% url 'moderation_dashboard' %}">Moderation</a>
+              {% endif %}
+              <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button class="link-button" type="submit">Logout</button>
+              </form>
+            </div>
+          </details>
         {% else %}
           <a href="{% url 'dashboard' %}">Home</a>
           <a href="{% url 'login' %}">Login</a>

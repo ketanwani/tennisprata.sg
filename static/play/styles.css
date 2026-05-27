@@ -9,6 +9,9 @@
   --prata: #f9733d;
   --sky: #0aa7d6;
   --sun: #ffb342;
+  --danger: #e5484d;
+  --danger-dark: #b4232a;
+  --danger-soft: #fff1f1;
   --soft: #f5f7fb;
   --shadow: 0 18px 46px rgba(34, 47, 60, 0.08);
   font-family: Lato, "Helvetica Neue", Arial, ui-sans-serif, system-ui, sans-serif;
@@ -457,8 +460,14 @@ button:hover,
 }
 
 .danger {
-  background: var(--clay);
+  background: var(--danger);
   color: white;
+  box-shadow: 0 10px 22px rgba(229, 72, 77, 0.18);
+}
+
+.danger:hover {
+  background: var(--danger-dark);
+  box-shadow: 0 14px 28px rgba(229, 72, 77, 0.24);
 }
 
 .small-button {
@@ -568,6 +577,7 @@ nav {
 }
 
 nav a,
+.nav-more summary,
 .link-button {
   color: #49515d;
   text-decoration: none;
@@ -577,6 +587,72 @@ nav a,
   border-radius: 999px;
   box-shadow: none;
   font-weight: 750;
+}
+
+.nav-more {
+  position: relative;
+}
+
+.nav-more summary {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+.nav-more summary::-webkit-details-marker {
+  display: none;
+}
+
+.nav-more summary::after {
+  content: "";
+  width: 7px;
+  height: 7px;
+  margin-left: 7px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg) translateY(-2px);
+  transition: transform 160ms ease;
+}
+
+.nav-more[open] summary {
+  background: #eef2f7;
+  color: var(--ink);
+}
+
+.nav-more[open] summary::after {
+  transform: rotate(225deg) translate(-1px, -1px);
+}
+
+.nav-more-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 35;
+  display: grid;
+  gap: 4px;
+  min-width: 210px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: white;
+  padding: 8px;
+  box-shadow: var(--shadow);
+}
+
+.nav-more:not([open]) .nav-more-menu {
+  display: none;
+}
+
+.nav-more-menu a,
+.nav-more-menu .link-button {
+  width: 100%;
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.nav-more-menu form {
+  margin: 0;
 }
 
 .nav-cta {
@@ -2223,8 +2299,12 @@ textarea {
 
   nav {
     width: 100%;
-    justify-content: space-between;
+    justify-content: flex-start;
     border-radius: 22px;
+  }
+
+  .nav-more {
+    margin-left: auto;
   }
 
   .toast-stack {
