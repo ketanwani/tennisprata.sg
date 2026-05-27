@@ -33,5 +33,6 @@ jobs:
             docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans
             docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T web python manage.py migrate
             docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T web python manage.py configure_google_oauth --domain tennisprata.live --skip-if-missing
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T -u root web sh -c "mkdir -p /app/media /app/staticfiles && chown -R appuser:appuser /app/media /app/staticfiles"
             docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T web python manage.py collectstatic --noinput
             docker compose -f docker-compose.yml -f docker-compose.prod.yml ps

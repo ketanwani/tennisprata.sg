@@ -38,18 +38,18 @@ http://localhost:8000/admin/
 
 ## POC Features
 
-- User registration with email or phone and NTRP level
+- Email-only user registration with verification and NTRP level
 - Google login/signup wiring via django-allauth
 - Singapore court search by name or postal code using OneMap
 - Redis-backed caching for OneMap search results
-- Editable user profile with avatar URL, home courts, and match history
+- Editable user profile with validated photo upload, home courts, and match history
 - Group-scoped prata sessions
 - Reusable pairs and ad hoc pair names
 - Join invite as solo, new pair, or existing pair
 - Session detail page with player list, NTRP levels, invite link, weather risk, and result recording
 - Session chat for parking, balls, exact court, delays, and prata planning
 - Pair leaderboard from recorded wins
-- Staff moderation dashboard for cancelling sessions, disabling users, and blocking emails/phone numbers
+- Staff moderation dashboard for cancelling sessions, disabling users, and blocking emails
 - Notification preferences for email reminders and calendar invites
 - Celery scheduled email reminder scan for sessions starting in about 24 hours
 - SMS and WhatsApp are shown as upcoming disabled channels
@@ -83,6 +83,11 @@ ALLOWED_HOSTS=tennisprata.live,www.tennisprata.live,165.245.188.29,localhost,127
 CSRF_TRUSTED_ORIGINS=https://tennisprata.live,https://www.tennisprata.live
 SESSION_COOKIE_SECURE=1
 CSRF_COOKIE_SECURE=1
+SECURE_SSL_REDIRECT=1
+SECURE_HSTS_SECONDS=31536000
+SECURE_HSTS_INCLUDE_SUBDOMAINS=0
+SECURE_HSTS_PRELOAD=0
+ACCOUNT_EMAIL_VERIFICATION=mandatory
 DATABASE_URL=postgres://tennisprata:tennisprata@db:5432/tennisprata
 CELERY_BROKER_URL=redis://redis:6379/0
 CELERY_RESULT_BACKEND=redis://redis:6379/1

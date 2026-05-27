@@ -52,7 +52,7 @@ services:
 
   celery-beat:
     build: .
-    command: celery -A tennisprata beat -l info
+    command: celery -A tennisprata beat -l info --schedule=/tmp/celerybeat-schedule
     volumes:
       - .:/app
       - media_data:/app/media
