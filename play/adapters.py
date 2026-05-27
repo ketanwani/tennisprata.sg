@@ -12,6 +12,9 @@ logger = logging.getLogger(__name__)
 
 
 class TennisPrataAccountAdapter(DefaultAccountAdapter):
+    def format_email_subject(self, subject):
+        return subject
+
     def get_login_redirect_url(self, request):
         next_invite = request.session.pop("next_invite", None)
         next_pair_invite = request.session.pop("next_pair_invite", None)
@@ -63,7 +66,7 @@ class TennisPrataSocialAccountAdapter(DefaultSocialAccountAdapter):
         )
         messages.error(
             request,
-            "Google sign-in could not be completed. Please try again or use email/phone login.",
+            "Google sign-in could not be completed. Please try again or use email login.",
             extra_tags="oauth",
         )
         raise ImmediateHttpResponse(redirect("login"))

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load account %}
+{% block title %}Confirm Email | tennisprata.sg{% endblock %}
+{% block content %}
+  <section class="narrow panel">
+    <p class="eyebrow">One last step</p>
+    <h1>Confirm your email</h1>
+
+    {% if confirmation %}
+      {% user_display confirmation.email_address.user as user_display %}
+      {% if can_confirm %}
+        <p class="lede">
+          Confirm <a href="mailto:{{ confirmation.email_address.email }}">{{ confirmation.email_address.email }}</a>
+          for {{ user_display }} so your tennisprata.sg account can log in.
+        </p>
+        {% url 'account_confirm_email' confirmation.key as action_url %}
+        <form method="post" action="{{ action_url }}" class="form-grid">
+          {% csrf_token %}
+          {{ redirect_field }}
+          <button type="submit">Confirm email</button>
+          <a class="button secondary" href="{% url 'login' %}">Back to login</a>
+        </form>
+      {% else %}
+        <p class="lede">
+          This email address is already confirmed by another account.
+        </p>
+        <a class="button" href="{% url 'login' %}">Back to login</a>
+      {% endif %}
+    {% else %}
+      <p class="lede">
+        This confirmation link has expired or is no longer valid.
+      </p>
+      <a class="button" href="{% url 'signup' %}">Create account</a>
+      <a class="button secondary" href="{% url 'login' %}">Back to login</a>
+    {% endif %}
+  </section>
+{% endblock %}

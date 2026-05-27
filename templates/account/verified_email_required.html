@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Verify Email | tennisprata.sg{% endblock %}
+{% block content %}
+  <section class="narrow panel">
+    <p class="eyebrow">Email needed</p>
+    <h1>Verify your email</h1>
+    <p class="lede">
+      Please confirm your email address before logging in to tennisprata.sg.
+    </p>
+    <a class="button" href="{% url 'login' %}">Back to login</a>
+  </section>
+{% endblock %}

@@ -1,0 +1,45 @@
+{% load account %}
+<!doctype html>
+<html lang="en">
+  <body style="margin:0;background:#f6f8fb;font-family:Arial,Helvetica,sans-serif;color:#15212f;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f6f8fb;padding:28px 12px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;border:1px solid #e6ebf1;border-radius:18px;overflow:hidden;">
+            <tr>
+              <td style="background:#18c3c8;padding:26px 28px;color:#ffffff;">
+                <div style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;">tennisprata.sg</div>
+                <div style="font-size:24px;line-height:1.25;font-weight:800;margin-top:8px;">Confirm your email</div>
+                <div style="font-size:14px;line-height:1.5;margin-top:8px;">Social tennis, friendly challenges, optional prata stakes.</div>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:30px 28px;">
+                {% user_display user as user_display %}
+                <p style="margin:0 0 16px;font-size:16px;line-height:1.55;">Hi {{ user_display }},</p>
+                <p style="margin:0 0 20px;font-size:16px;line-height:1.55;">
+                  Welcome to tennisprata.sg. Confirm this email address so you can log in, join prata challenges,
+                  form pairs, and receive match reminders.
+                </p>
+                <p style="margin:0 0 28px;">
+                  <a href="{{ activate_url }}" style="display:inline-block;background:#18c3c8;color:#ffffff;text-decoration:none;font-weight:800;border-radius:999px;padding:14px 22px;">
+                    Confirm email
+                  </a>
+                </p>
+                <p style="margin:0 0 8px;font-size:13px;line-height:1.5;color:#5c6875;">Button not working? Copy and paste this link:</p>
+                <p style="margin:0;font-size:13px;line-height:1.5;word-break:break-all;">
+                  <a href="{{ activate_url }}" style="color:#0b8790;">{{ activate_url }}</a>
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style="border-top:1px solid #edf1f5;padding:18px 28px;color:#778391;font-size:12px;line-height:1.5;">
+                If you did not create a tennisprata.sg account, you can ignore this email.
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

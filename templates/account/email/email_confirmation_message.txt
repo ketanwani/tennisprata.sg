@@ -1,0 +1,11 @@
+{% extends "account/email/base_message.txt" %}
+{% load account %}
+{% block content %}{% user_display user as user_display %}Hi {{ user_display }},
+
+Welcome to tennisprata.sg. Please confirm this email address so you can log in, join prata challenges, form pairs, and get match reminders.
+
+Confirm your email:
+{{ activate_url }}
+
+If you did not create a tennisprata.sg account, you can ignore this email.
+{% endblock content %}

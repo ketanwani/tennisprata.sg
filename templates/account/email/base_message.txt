@@ -1,0 +1,8 @@
+{% autoescape off %}tennisprata.sg
+Social tennis, friendly challenges, optional prata stakes.
+
+{% block content %}{% endblock content %}
+
+See you on court,
+tennisprata.sg
+{% endautoescape %}
