@@ -6,8 +6,6 @@
       <div class="profile-heading">
         {% if profile_obj.avatar %}
           <img class="profile-avatar large" src="{{ profile_obj.avatar.url }}" alt="">
-        {% elif profile_obj.avatar_url %}
-          <img class="profile-avatar large" src="{{ profile_obj.avatar_url }}" alt="">
         {% else %}
           <div class="profile-avatar large placeholder">{{ user.get_full_name|default:user.username|slice:":1" }}</div>
         {% endif %}
@@ -34,10 +32,6 @@
         <div class="form-section">
           <h2>Photo</h2>
           {% include "play/form_field.html" with field=form.avatar %}
-          <details class="advanced-fields">
-            <summary>Use image URL instead</summary>
-            {% include "play/form_field.html" with field=form.avatar_url %}
-          </details>
         </div>
         <button type="submit">Update profile</button>
       </form>
@@ -87,7 +81,7 @@
             <a class="button small-button" href="{{ invite.accept_url }}">Review</a>
           </div>
         {% empty %}
-          <p class="empty">Pair invites sent to your email or phone will appear here.</p>
+          <p class="empty">Pair invites sent to your verified email will appear here.</p>
         {% endfor %}
       </div>
       <h2>Notifications</h2>

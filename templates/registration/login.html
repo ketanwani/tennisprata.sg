@@ -5,7 +5,7 @@
   <section class="narrow panel">
     <p class="eyebrow">Welcome back</p>
     <h1>Login</h1>
-    <p class="lede">Use the email or phone number you registered with.</p>
+    <p class="lede">Use your verified email address to get back in.</p>
     <p class="setup-note">New here? <a href="{% url 'signup' %}">Create an account</a>.</p>
     {% if google_oauth_enabled %}
       <a class="button google-button" href="{% provider_login_url 'google' process='login' %}">Log in with Google</a>

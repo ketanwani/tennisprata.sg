@@ -4,7 +4,7 @@
   <section class="narrow panel">
     <p class="eyebrow">Moderation</p>
     <h1>Disable user</h1>
-    <p class="lede">{{ target.get_full_name|default:target.username }} will no longer be able to log in. You can also block their email or phone from future registration.</p>
+    <p class="lede">{{ target.get_full_name|default:target.username }} will no longer be able to log in. You can also block their email from future registration.</p>
     <form method="post" class="form-grid">
       {% csrf_token %}
       {% include "play/form_fields.html" with form=form %}

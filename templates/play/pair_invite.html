@@ -20,8 +20,6 @@
             <span class="participant-main">
               {% if player.profile.avatar %}
                 <img class="profile-avatar" src="{{ player.profile.avatar.url }}" alt="">
-              {% elif player.profile.avatar_url %}
-                <img class="profile-avatar" src="{{ player.profile.avatar_url }}" alt="">
               {% else %}
                 <span class="profile-avatar placeholder">{{ player.get_full_name|default:player.username|slice:":1" }}</span>
               {% endif %}

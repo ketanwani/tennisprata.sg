@@ -5,7 +5,7 @@
     <div>
       <p class="eyebrow">Staff tools</p>
       <h1>Moderation</h1>
-      <p>Cancel sessions, disable users, and block emails or phone numbers from registering or logging in.</p>
+      <p>Cancel sessions, disable users, and block emails from registering or logging in.</p>
     </div>
   </section>
 
@@ -71,7 +71,7 @@
     </article>
 
     <article class="panel">
-      <h2>Block email or phone</h2>
+      <h2>Block email</h2>
       <form method="post" class="form-grid">
         {% csrf_token %}
         {% include "play/form_fields.html" with form=block_form %}

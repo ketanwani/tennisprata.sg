@@ -1,6 +1,6 @@
+from allauth.account.utils import send_email_confirmation
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
-from django.contrib.auth import login
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
@@ -35,6 +35,7 @@ from .forms import (
     SignupForm,
     TestimonialForm,
 )
+from .identity import create_unverified_primary_email, email_address_is_verified
 from .models import (
     BlockedIdentity,
     ChatMessage,
@@ -92,6 +93,20 @@ def user_can_join_session(user, session, result=None):
 
 
 def user_can_access_session_chat(user, session):
+    if not user.is_authenticated:
+        return False
+    if user.is_staff or session.host_id == user.id:
+        return True
+    if session.is_singles and session.challenger_player_id == user.id:
+        return True
+    if session.host_pair and session.host_pair.players.filter(pk=user.pk).exists():
+        return True
+    if session.challenger_pair and session.challenger_pair.players.filter(pk=user.pk).exists():
+        return True
+    return session.participants.filter(user=user).exists()
+
+
+def user_can_view_session_detail(user, session):
     if not user.is_authenticated:
         return False
     if user.is_staff or session.host_id == user.id:
@@ -356,12 +371,9 @@ def testimonial_summary(user):
 
 
 def pending_pair_invites_for(user):
-    profile = getattr(user, "profile", None)
     query = Q()
-    if user.email:
+    if user.email and email_address_is_verified(user):
         query |= Q(invited_email__iexact=user.email)
-    if profile and profile.phone:
-        query |= Q(invited_phone=profile.phone)
     if not query:
         return Pair.objects.none()
     return (
@@ -371,6 +383,26 @@ def pending_pair_invites_for(user):
         .exclude(players=user)
         .order_by("-created_at")
     )
+
+
+def rate_limit_key(request, scope):
+    if request.user.is_authenticated:
+        return f"rate:{scope}:user:{request.user.pk}"
+    forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR", "")
+    ip = forwarded_for.split(",", 1)[0].strip() or request.META.get("REMOTE_ADDR", "unknown")
+    return f"rate:{scope}:ip:{ip}"
+
+
+def is_rate_limited(request, scope, limit, window_seconds):
+    key = rate_limit_key(request, scope)
+    count = cache.get(key, 0)
+    if count >= limit:
+        return True
+    if count:
+        cache.incr(key)
+    else:
+        cache.set(key, 1, window_seconds)
+    return False
 
 
 def sessions_for_user(user):
@@ -575,7 +607,10 @@ def session_search(request):
     )
 
 
+@login_required
 def location_search(request):
+    if is_rate_limited(request, "location-search", limit=30, window_seconds=60):
+        return JsonResponse({"results": [], "error": "Too many location searches. Please slow down."}, status=429)
     query = request.GET.get("q", "").strip()
     if len(query) < 2:
         return JsonResponse({"results": []})
@@ -642,11 +677,13 @@ def signup(request):
         if form.is_valid():
             user = form.save()
             ensure_demo_group(user)
-            login(request, user, backend="django.contrib.auth.backends.ModelBackend")
-            messages.success(request, "Welcome to tennisprata.sg.")
-            next_invite = request.session.pop("next_invite", None)
-            next_pair_invite = request.session.pop("next_pair_invite", None)
-            return redirect(next_invite or next_pair_invite or "dashboard")
+            create_unverified_primary_email(user)
+            sent = send_email_confirmation(request, user, signup=True, email=user.email)
+            if sent:
+                messages.success(request, "Almost there. Check your email and verify your account before logging in.")
+            else:
+                messages.info(request, "Account created. Please use the verification email to activate login.")
+            return redirect("login")
         add_form_error_messages(request, form, "Signup could not be completed.")
     else:
         form = SignupForm()
@@ -738,13 +775,6 @@ def moderation_disable_user(request, user_id):
                     value=normalize_identity(BlockedIdentity.IdentityType.EMAIL, target.email),
                     defaults={"reason": reason, "created_by": request.user},
                 )
-            profile = getattr(target, "profile", None)
-            if form.cleaned_data["block_phone"] and profile and profile.phone:
-                BlockedIdentity.objects.update_or_create(
-                    identity_type=BlockedIdentity.IdentityType.PHONE,
-                    value=normalize_identity(BlockedIdentity.IdentityType.PHONE, profile.phone),
-                    defaults={"reason": reason, "created_by": request.user},
-                )
             messages.success(request, f"Disabled {target.get_full_name() or target.username}.")
             return redirect("moderation_dashboard")
     else:
@@ -768,8 +798,14 @@ def profile(request):
     if request.method == "POST":
         form = ProfileForm(request.POST, request.FILES, instance=profile_obj)
         if form.is_valid():
+            previous_email = request.user.email
             form.save()
-            messages.success(request, "Profile updated.")
+            if previous_email.lower() != request.user.email.lower():
+                create_unverified_primary_email(request.user)
+                send_email_confirmation(request, request.user, email=request.user.email)
+                messages.success(request, "Profile updated. Please verify your new email before your next login.")
+            else:
+                messages.success(request, "Profile updated.")
             return redirect("profile")
         add_form_error_messages(request, form, "Profile could not be updated.")
     else:
@@ -799,34 +835,10 @@ def profile(request):
 def notification_preferences(request):
     profile_obj, _ = Profile.objects.get_or_create(user=request.user)
     if request.method == "POST":
-        action = request.POST.get("action", "save")
         form = NotificationPreferencesForm(request.POST, instance=profile_obj)
         if form.is_valid():
             form.save()
-            if action == "test_email":
-                try:
-                    sent = notify_user(
-                        request.user,
-                        NotificationPayload(
-                            title="Test email from tennisprata.sg",
-                            body=(
-                                "This is a test email from tennisprata.sg.\n\n"
-                                "If you received this, email notifications are ready."
-                            ),
-                            url="/notifications/preferences/",
-                        ),
-                        channels=["email"],
-                        raise_on_delivery_error=True,
-                    )
-                except Exception as exc:
-                    messages.error(request, f"Test email could not be sent: {exc}")
-                    return redirect("notification_preferences")
-                if sent:
-                    messages.success(request, "Test email sent.")
-                else:
-                    messages.error(request, "Add an email address on your profile before sending a test email.")
-            else:
-                messages.success(request, "Notification preferences updated.")
+            messages.success(request, "Notification preferences updated.")
             return redirect("notification_preferences")
         add_form_error_messages(request, form, "Notification preferences could not be updated.")
     else:
@@ -870,8 +882,8 @@ def create_pair(request):
 def apply_partner_invite(pair, partner_name="", partner_contact=""):
     partner_contact = (partner_contact or "").strip()
     pair.invited_name = (partner_name or "").strip()
-    pair.invited_email = partner_contact.lower() if "@" in partner_contact else ""
-    pair.invited_phone = "" if "@" in partner_contact else partner_contact
+    pair.invited_email = partner_contact.lower()
+    pair.invited_phone = ""
     pair.status = Pair.Status.PENDING if partner_contact else Pair.Status.CONFIRMED
 
 
@@ -885,9 +897,6 @@ def add_invited_existing_user(pair):
     invited_user = None
     if pair.invited_email:
         invited_user = User.objects.filter(email__iexact=pair.invited_email).first()
-    elif pair.invited_phone:
-        profile = Profile.objects.select_related("user").filter(phone=pair.invited_phone).first()
-        invited_user = profile.user if profile else None
     if invited_user:
         pair.players.add(invited_user)
 
@@ -957,7 +966,7 @@ def pair_detail(request, pk):
             "can_leave_pair": pair.players.filter(pk=request.user.pk).exists(),
             "can_manage_invite": can_manage_invite,
             "invite_form": PairInviteForm(
-                initial={"partner_name": pair.invited_name, "partner_contact": pair.invited_email or pair.invited_phone}
+                initial={"partner_name": pair.invited_name, "partner_contact": pair.invited_email}
             ),
         },
     )
@@ -979,8 +988,8 @@ def update_pair_invite(request, pk):
         rotate_pair_invite(pair)
         pair.invited_name = form.cleaned_data.get("partner_name", "").strip()
         partner_contact = form.cleaned_data.get("partner_contact", "").strip()
-        pair.invited_email = partner_contact.lower() if "@" in partner_contact else ""
-        pair.invited_phone = "" if "@" in partner_contact else partner_contact
+        pair.invited_email = partner_contact.lower()
+        pair.invited_phone = ""
         pair.status = Pair.Status.PENDING
         pair.save(update_fields=["invite_code", "invited_name", "invited_email", "invited_phone", "status"])
         messages.success(request, "Invite link refreshed. Share it with your new partner.")
@@ -1188,6 +1197,8 @@ def session_detail(request, pk):
     if not request.user.is_authenticated:
         request.session["next_invite"] = request.path
         return render(request, "play/session_invite_gate.html", {"session": session, "hide_details": True})
+    if not user_can_view_session_detail(request.user, session):
+        raise PermissionDenied("Use the private invite link to join this challenge.")
     result = getattr(session, "result", None)
     chat_form = ChatMessageForm()
     score_form = MatchScoreForm(session=session)

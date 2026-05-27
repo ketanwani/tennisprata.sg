@@ -3,10 +3,13 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 from django.utils import timezone
 from django.utils.text import slugify
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
+from PIL import Image, UnidentifiedImageError
 
+from .identity import email_address_is_verified
 from .models import (
     BlockedIdentity,
     ChatMessage,
@@ -20,19 +23,19 @@ from .models import (
     normalize_identity,
 )
 
+MAX_AVATAR_BYTES = 2 * 1024 * 1024
+MAX_AVATAR_DIMENSION = 2000
+ALLOWED_AVATAR_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp"}
+ALLOWED_AVATAR_FORMATS = {"JPEG", "PNG", "WEBP"}
+Image.MAX_IMAGE_PIXELS = 8_000_000
+
 
 class SignupForm(UserCreationForm):
     full_name = forms.CharField(max_length=120, label="Full name")
     email = forms.EmailField(
-        required=False,
+        required=True,
         label="Email address",
-        help_text="Optional if you prefer to use your phone number.",
-    )
-    phone = forms.CharField(
-        max_length=32,
-        required=False,
-        label="Phone number",
-        help_text="Optional if you prefer to use your email address.",
+        help_text="We will send a verification link before you can log in.",
     )
     ntrp_level = forms.ChoiceField(
         choices=NTRP_LEVEL_CHOICES,
@@ -42,14 +45,13 @@ class SignupForm(UserCreationForm):
 
     class Meta:
         model = User
-        fields = ("full_name", "email", "phone", "ntrp_level", "password1", "password2")
+        fields = ("full_name", "email", "ntrp_level", "password1", "password2")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         placeholders = {
             "full_name": "Full name",
             "email": "Email address",
-            "phone": "Phone number",
             "password1": "Create password",
             "password2": "Confirm password",
         }
@@ -59,9 +61,8 @@ class SignupForm(UserCreationForm):
     def clean(self):
         cleaned = super().clean()
         email = cleaned.get("email", "").strip().lower()
-        phone = cleaned.get("phone", "").strip()
-        if not email and not phone:
-            raise forms.ValidationError("Add either email or phone so reminders can reach you.")
+        if not email:
+            self.add_error("email", "Email is required to create an account.")
         if email and User.objects.filter(email__iexact=email).exists():
             self.add_error("email", "An account with this email already exists.")
         if email and BlockedIdentity.objects.filter(
@@ -69,15 +70,7 @@ class SignupForm(UserCreationForm):
             value=normalize_identity(BlockedIdentity.IdentityType.EMAIL, email),
         ).exists():
             self.add_error("email", "This email cannot register on tennisprata.sg.")
-        if phone and Profile.objects.filter(phone=phone).exists():
-            self.add_error("phone", "An account with this phone number already exists.")
-        if phone and BlockedIdentity.objects.filter(
-            identity_type=BlockedIdentity.IdentityType.PHONE,
-            value=normalize_identity(BlockedIdentity.IdentityType.PHONE, phone),
-        ).exists():
-            self.add_error("phone", "This phone number cannot register on tennisprata.sg.")
         cleaned["email"] = email
-        cleaned["phone"] = phone
         return cleaned
 
     def save(self, commit=True):
@@ -92,7 +85,7 @@ class SignupForm(UserCreationForm):
             Profile.objects.update_or_create(
                 user=user,
                 defaults={
-                    "phone": self.cleaned_data.get("phone", ""),
+                    "phone": "",
                     "ntrp_level": self.cleaned_data["ntrp_level"],
                 },
             )
@@ -100,8 +93,7 @@ class SignupForm(UserCreationForm):
 
     def _make_username(self):
         email = self.cleaned_data.get("email")
-        phone = self.cleaned_data.get("phone")
-        seed = email.split("@")[0] if email else phone
+        seed = email.split("@")[0] if email else "player"
         base = slugify(seed) or "player"
         username = base[:140]
         suffix = 1
@@ -112,14 +104,14 @@ class SignupForm(UserCreationForm):
 
 
 class ContactLoginForm(AuthenticationForm):
-    username = forms.CharField(label="Email or phone", max_length=254)
+    username = forms.EmailField(label="Email", max_length=254)
 
     def clean(self):
-        identifier = self.cleaned_data.get("username", "").strip()
+        identifier = self.cleaned_data.get("username", "").strip().lower()
         password = self.cleaned_data.get("password")
         username = identifier
 
-        if identifier and "@" in identifier:
+        if identifier:
             if BlockedIdentity.objects.filter(
                 identity_type=BlockedIdentity.IdentityType.EMAIL,
                 value=normalize_identity(BlockedIdentity.IdentityType.EMAIL, identifier),
@@ -127,23 +119,20 @@ class ContactLoginForm(AuthenticationForm):
                 raise ValidationError("This email is not allowed to log in.", code="blocked_login")
             user = User.objects.filter(email__iexact=identifier).first()
             username = user.username if user else identifier
-        elif identifier:
-            if BlockedIdentity.objects.filter(
-                identity_type=BlockedIdentity.IdentityType.PHONE,
-                value=normalize_identity(BlockedIdentity.IdentityType.PHONE, identifier),
-            ).exists():
-                raise ValidationError("This phone number is not allowed to log in.", code="blocked_login")
-            profile = Profile.objects.select_related("user").filter(phone=identifier).first()
-            username = profile.user.username if profile else identifier
 
         if username and password:
             self.user_cache = authenticate(self.request, username=username, password=password)
             if self.user_cache is None:
                 raise ValidationError(
-                    "Please enter a correct email or phone and password.",
+                    "Please enter a correct email and password.",
                     code="invalid_login",
                 )
             self.confirm_login_allowed(self.user_cache)
+            if not email_address_is_verified(self.user_cache):
+                raise ValidationError(
+                    "Please verify your email before logging in.",
+                    code="email_not_verified",
+                )
         return self.cleaned_data
 
 
@@ -151,6 +140,12 @@ class BlockedIdentityForm(forms.ModelForm):
     class Meta:
         model = BlockedIdentity
         fields = ("identity_type", "value", "reason")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["identity_type"].choices = (
+            (BlockedIdentity.IdentityType.EMAIL, "Email"),
+        )
 
 
 class CancelSessionForm(forms.Form):
@@ -168,12 +163,11 @@ class DisableUserForm(forms.Form):
         widget=forms.Textarea(attrs={"rows": 3, "placeholder": "Optional internal moderation reason"}),
     )
     block_email = forms.BooleanField(required=False, initial=True)
-    block_phone = forms.BooleanField(required=False, initial=True)
 
 
 class ProfileForm(forms.ModelForm):
     full_name = forms.CharField(max_length=120)
-    email = forms.EmailField(required=False)
+    email = forms.EmailField(required=True, help_text="Changing this email requires verification before your next login.")
 
     class Meta:
         model = Profile
@@ -182,7 +176,6 @@ class ProfileForm(forms.ModelForm):
             "email",
             "phone",
             "avatar",
-            "avatar_url",
             "ntrp_level",
             "home_courts",
             "bio",
@@ -190,7 +183,6 @@ class ProfileForm(forms.ModelForm):
         labels = {
             "ntrp_level": "NTRP level",
             "home_courts": "Home courts",
-            "avatar_url": "Image URL",
         }
 
     def __init__(self, *args, **kwargs):
@@ -199,6 +191,55 @@ class ProfileForm(forms.ModelForm):
         self.fields["full_name"].initial = user.get_full_name() or user.username
         self.fields["email"].initial = user.email
         self.fields["ntrp_level"].widget.attrs.update({"data-ntrp-slider": "true"})
+
+    def clean(self):
+        cleaned = super().clean()
+        email = cleaned.get("email", "").strip().lower()
+        phone = cleaned.get("phone", "").strip()
+        if not email:
+            self.add_error("email", "Email is required for login and account recovery.")
+        if email and User.objects.filter(email__iexact=email).exclude(pk=self.instance.user_id).exists():
+            self.add_error("email", "Another account already uses this email.")
+        if email and BlockedIdentity.objects.filter(
+            identity_type=BlockedIdentity.IdentityType.EMAIL,
+            value=normalize_identity(BlockedIdentity.IdentityType.EMAIL, email),
+        ).exists():
+            self.add_error("email", "This email cannot be used on tennisprata.sg.")
+        if phone and Profile.objects.filter(phone=phone).exclude(pk=self.instance.pk).exists():
+            self.add_error("phone", "Another account already uses this phone number.")
+        if phone and BlockedIdentity.objects.filter(
+            identity_type=BlockedIdentity.IdentityType.PHONE,
+            value=normalize_identity(BlockedIdentity.IdentityType.PHONE, phone),
+        ).exists():
+            self.add_error("phone", "This phone number cannot be used on tennisprata.sg.")
+        cleaned["email"] = email
+        cleaned["phone"] = phone
+        return cleaned
+
+    def clean_avatar(self):
+        avatar = self.cleaned_data.get("avatar")
+        if not avatar:
+            return avatar
+        if avatar.size > MAX_AVATAR_BYTES:
+            raise forms.ValidationError("Profile photo must be 2 MB or smaller.")
+        content_type = getattr(avatar, "content_type", "")
+        if content_type and content_type not in ALLOWED_AVATAR_CONTENT_TYPES:
+            raise forms.ValidationError("Upload a JPG, PNG, or WebP image.")
+        try:
+            avatar.seek(0)
+            image = Image.open(avatar)
+            width, height = image.size
+            image_format = image.format
+            image.verify()
+        except (UnidentifiedImageError, OSError, Image.DecompressionBombError):
+            raise forms.ValidationError("Upload a valid image file.")
+        finally:
+            avatar.seek(0)
+        if image_format not in ALLOWED_AVATAR_FORMATS:
+            raise forms.ValidationError("Upload a JPG, PNG, or WebP image.")
+        if width > MAX_AVATAR_DIMENSION or height > MAX_AVATAR_DIMENSION:
+            raise forms.ValidationError("Profile photo must be 2000 x 2000 pixels or smaller.")
+        return avatar
 
     def save(self, commit=True):
         profile = super().save(commit=False)
@@ -271,7 +312,7 @@ class PairForm(forms.ModelForm):
     partner_contact = forms.CharField(
         max_length=254,
         required=False,
-        label="Partner email or phone",
+        label="Partner email",
         help_text="If they already have an account, they can accept and join this pair.",
     )
 
@@ -287,7 +328,10 @@ class PairForm(forms.ModelForm):
         }
 
     def clean_partner_contact(self):
-        return self.cleaned_data.get("partner_contact", "").strip()
+        partner_contact = self.cleaned_data.get("partner_contact", "").strip().lower()
+        if partner_contact:
+            validate_email(partner_contact)
+        return partner_contact
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -304,13 +348,16 @@ class PairInviteForm(forms.Form):
     partner_contact = forms.CharField(
         max_length=254,
         required=False,
-        label="Partner email or phone",
-        widget=forms.TextInput(attrs={"placeholder": "Email or phone"}),
+        label="Partner email",
+        widget=forms.EmailInput(attrs={"placeholder": "Email address"}),
         help_text="Optional for the POC. You can also just copy the invite link.",
     )
 
     def clean_partner_contact(self):
-        return self.cleaned_data.get("partner_contact", "").strip()
+        partner_contact = self.cleaned_data.get("partner_contact", "").strip().lower()
+        if partner_contact:
+            validate_email(partner_contact)
+        return partner_contact
 
 
 class PrataSessionForm(forms.ModelForm):

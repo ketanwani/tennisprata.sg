@@ -140,8 +140,6 @@
                   <span class="participant-main">
                     {% if item.user.profile.avatar %}
                       <img class="profile-avatar" src="{{ item.user.profile.avatar.url }}" alt="">
-                    {% elif item.user.profile.avatar_url %}
-                      <img class="profile-avatar" src="{{ item.user.profile.avatar_url }}" alt="">
                     {% else %}
                       <span class="profile-avatar placeholder">{{ item.name|slice:":1" }}</span>
                     {% endif %}

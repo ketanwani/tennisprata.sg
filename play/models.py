@@ -34,7 +34,6 @@ class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     phone = models.CharField(max_length=32, blank=True)
     avatar = models.ImageField(upload_to="avatars/", blank=True)
-    avatar_url = models.URLField(blank=True)
     ntrp_level = models.CharField(max_length=16, choices=NTRP_LEVEL_CHOICES, default=NtrpLevel.THREE_ZERO)
     home_courts = models.CharField(max_length=160, blank=True)
     bio = models.TextField(blank=True)
